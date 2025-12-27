@@ -1,0 +1,372 @@
+import {
+  Blend,
+  CalendarCog,
+  Diameter,
+  Grid2X2Plus,
+  HomeIcon,
+  List,
+  LoaderPinwheel,
+  Lock,
+  Car,
+  PencilRuler,
+  PlusCircle,
+  Ratio,
+  ScissorsLineDashed,
+  Settings2,
+  SettingsIcon,
+  ShipWheel,
+  ShoppingBag,
+  Signature,
+  TruckIcon,
+  User,
+  UserIcon,
+  LifeBuoy,
+  ServerCog 
+} from "lucide-react"; // Import necessary icons
+import React from "react";
+
+interface IUserLinks {
+  label: string;
+  links: {
+    href: string;
+    label: string;
+    icon: React.ReactNode;
+  }[];
+}
+
+interface IAdminLinks {
+  label: string;
+  links: {
+    href: string;
+    label: string;
+    icon: React.ReactNode;
+  }[];
+}
+
+export const userLinks: IUserLinks[] = [
+  {
+    label: "Profile",
+    links: [
+      {
+        href: "/profile",
+        label: "Profile",
+        icon: React.createElement(UserIcon, { className: "w-5 h-5" }),
+      },
+    ],
+  },
+  {
+    label: "Settings",
+    links: [
+      {
+        href: "/profile/settings",
+        label: "Settings",
+        icon: React.createElement(SettingsIcon, { className: "w-5 h-5" }),
+      },
+    ],
+  },
+  {
+    label: "Orders",
+    links: [
+      {
+        href: "/profile/order",
+        label: "Orders",
+        icon: React.createElement(ShoppingBag, { className: "w-5 h-5" }),
+      },
+    ],
+  },
+  {
+    label: "Change Password",
+    links: [
+      {
+        href: "/profile/change-password",
+        label: "Change Password",
+        icon: React.createElement(Lock, { className: "w-5 h-5" }),
+      },
+    ],
+  },
+];
+
+export const adminLinks: IAdminLinks[] = [
+  {
+    label: "Dashboard",
+    links: [
+      {
+        href: "/admin",
+        label: "Admin Home",
+        icon: React.createElement(HomeIcon, { className: "w-5 h-5" }), // Home icon for dashboard
+      },
+    ],
+  },
+  {
+    label: "Profile",
+    links: [
+      // {
+      //   href: "/admin/profile",
+      //   label: "Profile",
+      //   icon: React.createElement(UserIcon, { className: "w-5 h-5" }), // User icon for profile
+      // },
+      // {
+      //   href: "/admin/profile/settings",
+      //   label: "Settings",
+      //   icon: React.createElement(SettingsIcon, { className: "w-5 h-5" }), // Settings icon
+      // },
+      {
+        href: "/admin/profile/change-password",
+        label: "Change Password",
+        icon: React.createElement(Lock, { className: "w-5 h-5" }), // Lock icon
+      },
+    ],
+  },
+  {
+    label: "User Management",
+    links: [
+      {
+        href: "/admin/users",
+        label: "Users",
+        icon: React.createElement(User, { className: "w-5 h-5" }), // File icon for category
+      },
+      {
+        href: "/admin/fleet-users",
+        label: "Fleet Users",
+        icon: React.createElement(User, { className: "w-5 h-5" }), // File icon for category
+      },
+    ],
+  },
+  {
+    label: "Service Management",
+    links: [
+      {
+        href: "/admin/service",
+        label: "Service",
+        icon: React.createElement(ServerCog, { className: "w-5 h-5" }), // File icon for category
+      },
+    ],
+  },
+  {
+    label: "Category Management",
+    links: [
+      {
+        href: "/admin/category",
+        label: "Category",
+        icon: React.createElement(Grid2X2Plus, { className: "w-5 h-5" }), // File icon for category
+      },
+      {
+        href: "/admin/driving-type",
+        label: "Driving Type",
+        icon: React.createElement(TruckIcon, { className: "w-5 h-5" }), // Truck icon for driving type
+      },
+    ],
+  },
+  {
+    label: "Vehicle Management",
+    links: [
+      {
+        href: "/admin/year",
+        label: "Year",
+        icon: React.createElement(CalendarCog, { className: "w-5 h-5" }),
+      },
+      {
+        href: "/admin/make",
+        label: "Make",
+        icon: React.createElement(Settings2, { className: "w-5 h-5" }),
+      },
+      {
+        href: "/admin/model",
+        label: "Model",
+        icon: React.createElement(Blend, { className: "w-5 h-5" }),
+      },
+      {
+        href: "/admin/trim",
+        label: "Trim",
+        icon: React.createElement(ScissorsLineDashed, { className: "w-5 h-5" }),
+      },
+      {
+        href: "/admin/tyre-size",
+        label: "Tyre Size",
+        icon: React.createElement(LoaderPinwheel, { className: "w-5 h-5" }),
+      },
+      {
+        href: "/admin/brand",
+        label: "Brand",
+        icon: React.createElement(Signature, { className: "w-5 h-5" }), // File icon for vehicle
+      },
+      {
+        href: "/admin/vehicle-type",
+        label: "Vehicle Type",
+        icon: React.createElement(Car, { className: "w-5 h-5" }), // File icon for vehicle
+      },
+      {
+        // Tyre-ratio
+        href: "/admin/tyre-ratio",
+        label: "Tyre Ratio",
+        icon: React.createElement(Ratio, { className: "w-5 h-5" }),
+      },
+      {
+        // tyre diameter
+        href: "/admin/tyre-diameter",
+        label: "Tyre Diameter",
+        icon: React.createElement(Diameter, { className: "w-5 h-5" }),
+      },
+      {
+        // wheel-ratio
+        href: "/admin/wheel-ratio",
+        label: "Wheel Ratio",
+        icon: React.createElement(ShipWheel, { className: "w-5 h-5" }),
+      },
+      {
+        //wheel-width
+        href: "/admin/wheel-width",
+        label: "Wheel Width",
+        icon: React.createElement(PencilRuler, { className: "w-5 h-5" }),
+      },
+      {
+        //wheel-width
+        href: "/admin/wheel-width-type",
+        label: "Wheel Width Type",
+        icon: React.createElement(LifeBuoy, { className: "w-5 h-5" }),
+      },
+
+      {
+        // wheel diameter
+        href: "/admin/wheel-diameter",
+        label: "Wheel Diameter",
+        icon: React.createElement(Diameter, { className: "w-5 h-5" }),
+      },
+    ],
+  },
+  {
+    label: "Tire Management",
+    links: [
+      {
+        href: "/admin/tire/create",
+        label: "Create Tire",
+        icon: React.createElement(PlusCircle, { className: "w-5 h-5" }), // PlusCircle for Create
+      },
+      {
+        href: "/admin/tire",
+        label: "All Tires",
+        icon: React.createElement(List, { className: "w-5 h-5" }), // List for All Tires
+      },
+    ],
+  },
+  {
+    label: "Wheel Management",
+    links: [
+      {
+        href: "/admin/wheel/create",
+        label: "Create Wheel",
+        icon: React.createElement(PlusCircle, { className: "w-5 h-5" }), // PlusCircle for Create
+      },
+      {
+        href: "/admin/wheel",
+        label: "All Wheels",
+        icon: React.createElement(List, { className: "w-5 h-5" }), // List for All Tires
+      },
+    ],
+  },
+  {
+    label: "Product Images",
+    links: [
+      {
+        href: "/admin/upload/image",
+        label: "Upload Images",
+        icon: React.createElement(PlusCircle, { className: "w-5 h-5" }), // PlusCircle for Create
+      },
+    ],
+  },
+  {
+    label: "Order Management",
+    links: [
+      {
+        href: "/admin/order",
+        label: "All Orders",
+        icon: React.createElement(ShoppingBag, { className: "w-5 h-5" }),
+      },
+    ],
+  },
+  {
+    label: "Deals Management",
+    links: [
+      {
+        href: "/admin/deals",
+        label: "All Deals",
+        icon: React.createElement(List, { className: "w-5 h-5" }),
+      },
+      {
+        href: "/admin/deals/create",
+        label: "Create Deal",
+        icon: React.createElement(PlusCircle, { className: "w-5 h-5" }),
+      },
+    ],
+  },
+  {
+    label: "Appointments Management",
+    links: [
+      {
+        href: "/admin/appointment",
+        label: "All appointments",
+        icon: React.createElement(List, { className: "w-5 h-5" }),
+      },
+    ],
+  },
+  {
+    label: "Blogs Management",
+    links: [
+      {
+        href: "/admin/blog",
+        label: "All Blogs",
+        icon: React.createElement(List, { className: "w-5 h-5" }),
+      },
+      {
+        href: "/admin/blog/create",
+        label: "Create Blog",
+        icon: React.createElement(PlusCircle, { className: "w-5 h-5" }),
+      },
+    ],
+  },
+  {
+    label: "Inquiries Management",
+    links: [
+      {
+        href: "/admin/contact",
+        label: "All Inquiries",
+        icon: React.createElement(List, { className: "w-5 h-5" }),
+      },
+    ],
+  },
+  {
+    label: "Fleet Appointments",
+    links: [
+      {
+        href: "/admin/fleet-appointments",
+        label: "All Fleet Appointments",
+        icon: React.createElement(List, { className: "w-5 h-5" }),
+      },
+    ],
+  },
+  {
+    label: "Fleet Support",
+    links: [
+      {
+        href: "/admin/fleet-support",
+        label: "Support Requests",
+        icon: React.createElement(List, { className: "w-5 h-5" }),
+      },
+    ],
+  },
+  {
+    label: "Fleet News",
+    links: [
+      {
+        href: "/admin/fleet-news",
+        label: "All Fleet News",
+        icon: React.createElement(List, { className: "w-5 h-5" }),
+      },
+      {
+        href: "/admin/fleet-news/create",
+        label: "Create Fleet News",
+        icon: React.createElement(PlusCircle, { className: "w-5 h-5" }),
+      },
+    ],
+  },
+];
