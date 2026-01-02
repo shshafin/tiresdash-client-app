@@ -6,808 +6,651 @@ import { useAddItemToCart } from "@/src/hooks/cart.hook";
 import { useUser } from "@/src/context/user.provider";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
-import { Chip } from "@heroui/chip";
 import { Tabs, Tab } from "@heroui/tabs";
 import {
   ShoppingCart,
-  Heart,
   Star,
-  Shield,
-  Truck,
+  ShieldCheck,
   ArrowLeft,
   Plus,
   Minus,
-  Check,
-  Info,
+  Zap,
+  Activity,
+  Package,
+  X,
+  ChevronRight,
+  ShieldAlert,
+  Trash2,
+  Trophy,
+  Gauge,
+  History,
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAddItemToWishlist } from "@/src/hooks/wishlist.hook";
 import {
   useGetProductReview,
   useCreateReview,
   useUpdateReview,
   useDeleteReview,
 } from "@/src/hooks/review.hook";
-import { redirect } from "next/navigation";
-
-interface TireData {
-  _id: string;
-  name: string;
-  year: { year: number };
-  make: { make: string; logo: string };
-  model: { model: string };
-  trim: { trim: string };
-  tireSize: { tireSize: string };
-  brand: { name: string; logo: string; description: string };
-  category: { name: string; image: string };
-  description: string;
-  images: string[];
-  ratio: { ratio: string };
-  diameter: { diameter: number };
-  price: number;
-  discountPrice: number;
-  stockQuantity: number;
-  warranty: string;
-  // Technical specifications
-  sectionWidth: number;
-  loadIndex: number;
-  speedRatingRange: string;
-  treadPattern: string;
-  constructionType: string;
-  tireType: string;
-  maxPSI: number;
-  loadCapacity: number;
-  treadDepth: number;
-  // Additional info
-  productLine: string;
-  conditionInfo: string;
-  mileageWarrantyRange: string;
-  temperatureGradeRange: string;
-  tractionGradeRange: string;
-  treadwearGradeRange: string;
-}
+import { useRouter } from "next/navigation";
 
 const SingleTirePage = ({ params }: { params: { id: string } }) => {
   const { user } = useUser();
+  const router = useRouter();
   const queryClient = useQueryClient();
-  const { data, isLoading, isError } = useGetSingleTire(params.id);
-  const tire: TireData = data?.data;
+  const { data, isLoading } = useGetSingleTire(params.id);
+  const tire = data?.data;
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [tireSet, setTireSet] = useState(1);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
 
   const { mutate: addToCart, isPending: addingToCart } = useAddItemToCart({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["GET_CART"] });
-      toast.success("Added to cart successfully!");
-    },
-    onError: () => {
-      toast.error("Failed to add to cart");
+      toast.success("Speeding to your cart...");
+      router.push("/cart");
     },
     userId: user?._id,
   });
 
-  const { mutate: addToWishlist, isPending: addingToWishlist } =
-    useAddItemToWishlist({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["GET_WISHLIST"] });
-        toast.success("Added to wishlist!");
-      },
-      onError: () => {
-        toast.error("Failed to add to wishlist");
-      },
-      userId: user?._id,
-    });
-
-  // Review hooks and state
-  const {
-    data: reviewsData,
-    isLoading: reviewsLoading,
-    refetch: refetchReview,
-  } = useGetProductReview({ id: params.id, productType: "tire" });
+  const { data: reviewsData } = useGetProductReview({
+    id: params.id,
+    productType: "tire",
+  });
   const reviews = reviewsData?.data || [];
-  const totalRating = reviews.reduce(
-    (sum: any, review: any) => sum + review.rating,
-    0
-  );
-  const averageRating = reviews.length ? totalRating / reviews.length : 0;
-  const [showReviewForm, setShowReviewForm] = useState<boolean>(false);
-  const [editingReview, setEditingReview] = useState<any>(null);
-  const [reviewForm, setReviewForm] = useState({
-    rating: 5,
-    comment: "",
-  });
-
-  const { mutate: addReview, isPending: addingReview } = useCreateReview({
-    onSuccess: () => {
-      // refetchReview();
-      queryClient.invalidateQueries({ queryKey: ["PRODUCT_REVIEWS"] });
-      toast.success("Review added successfully!");
-      setShowReviewForm(false);
-      setReviewForm({ rating: 5, comment: "" });
-    },
-    onError: () => {
-      toast.error("Failed to add review");
-    },
-  });
-
-  const { mutate: updateReview, isPending: updatingReview } = useUpdateReview({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["PRODUCT_REVIEWS"] });
-      toast.success("Review updated successfully!");
-      setEditingReview(null);
-      setReviewForm({ rating: 5, comment: "" });
-      setShowReviewForm(false);
-    },
-    onError: () => {
-      toast.error("Failed to update review");
-    },
-  });
-
-  const { mutate: deleteReview, isPending: deletingReview } = useDeleteReview({
-    onSuccess: () => {
-      // refetchReview();
-      queryClient.invalidateQueries({ queryKey: ["PRODUCT_REVIEWS"] });
-      toast.success("Review deleted successfully!");
-    },
-    onError: () => {
-      toast.error("Failed to delete review");
-    },
-  });
-
-  const handleAddToCart = () => {
-    if (!user) {
-      toast.error("Please login to add items to cart");
-      redirect(`/login?redirect=/tire/${params.id}`);
-      return;
-    }
-    addToCart({
-      productType: "tire",
-      productId: tire._id,
-      quantity: quantity,
-    });
-  };
-
-  const handleAddToWishlist = () => {
-    if (!user) {
-      toast.error("Please login to add items to wishlist");
-      redirect(`/login?redirect=/tire/${params.id}`);
-      return;
-    }
-    addToWishlist({
-      productType: "tire",
-      product: tire._id,
-    });
-  };
-
-  const handleSubmitReview = () => {
-    if (!user) {
-      toast.error("Please login to add a review");
-      return;
-    }
-
-    if (editingReview) {
-      updateReview({
-        id: editingReview._id,
-        data: {
-          rating: reviewForm.rating,
-          comment: reviewForm.comment,
-        },
-      });
-    } else {
-      addReview({
-        product: tire._id,
-        productType: "tire",
-        rating: reviewForm.rating,
-        comment: reviewForm.comment,
-      });
-    }
-  };
-
-  const handleEditReview = (review: any) => {
-    setEditingReview(review);
-    setReviewForm({
-      rating: review.rating,
-      comment: review.comment,
-    });
-    setShowReviewForm(true);
-  };
-
-  const handleDeleteReview = (reviewId: any) => {
-    if (confirm("Are you sure you want to delete this review?")) {
-      deleteReview(reviewId);
-    }
-  };
-
-  const handleCancelReview = () => {
-    setShowReviewForm(false);
-    setEditingReview(null);
-    setReviewForm({ rating: 5, comment: "" });
-  };
-
-  const renderStars = (
-    rating: any,
-    interactive = false,
-    onRatingChange: any = null
-  ) => {
-    return (
-      <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            type="button"
-            onClick={() =>
-              interactive && onRatingChange && onRatingChange(star)
-            }
-            className={`${interactive ? "cursor-pointer hover:scale-110" : "cursor-default"} transition-transform`}
-            disabled={!interactive}>
-            <Star
-              className={`h-5 w-5 ${
-                star <= rating
-                  ? "fill-yellow-400 text-yellow-400"
-                  : "fill-gray-200 text-gray-200"
-              }`}
-            />
-          </button>
-        ))}
-      </div>
-    );
-  };
-
-  const discountPercentage = tire?.discountPrice
-    ? Math.round(((tire.price - tire.discountPrice) / tire.price) * 100)
+  const averageRating = reviews.length
+    ? reviews.reduce((sum: any, r: any) => sum + r.rating, 0) / reviews.length
     : 0;
 
-  if (isLoading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading tire details...</p>
-        </div>
-      </div>
-    );
-  }
+  const hasAlreadyReviewed = reviews.some(
+    (r: any) => r.user?._id === user?._id
+  );
 
-  if (isError || !tire) {
+  const { mutate: addReview } = useCreateReview({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["PRODUCT_REVIEWS"] });
+      toast.success("Review posted!");
+      setShowReviewForm(false);
+      setReviewForm({ rating: 5, comment: "" });
+    },
+  });
+
+  const { mutate: deleteReview } = useDeleteReview({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["PRODUCT_REVIEWS"] });
+      toast.success("Review deleted!");
+    },
+  });
+
+  const getUnitPrice = () => {
+    if (tireSet === 2 && tire?.twoSetDiscountPrice)
+      return tire.twoSetDiscountPrice / 2;
+    if (tireSet === 4 && tire?.fourSetDiscountPrice)
+      return tire.fourSetDiscountPrice / 4;
+    return tire?.discountPrice || tire?.price || 0;
+  };
+
+  const unitPrice = getUnitPrice();
+  const finalQuantity = quantity * tireSet;
+  const totalPrice = unitPrice * finalQuantity;
+
+  if (isLoading)
     return (
-      <div className="flex h-[50vh] flex-col items-center justify-center gap-4">
-        <p className="text-xl font-semibold text-red-500">Tire not found</p>
-        <Link href="/tire">
-          <Button>Back to Tires</Button>
-        </Link>
+      <div className="flex h-screen items-center justify-center bg-white">
+        <Zap
+          className="animate-spin text-orange-600"
+          size={48}
+        />
       </div>
     );
-  }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      {/* Breadcrumb */}
-      <div className="mb-6">
-        <Link href="/tires">
-          <Button
-            variant="ghost"
-            className="gap-2 mb-4">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Tires
-          </Button>
-        </Link>
-        <div className="text-sm text-gray-500">
-          <span>Tires</span> / <span>{tire.brand.name}</span> /{" "}
-          <span>{tire.name}</span>
-        </div>
-      </div>
+    <div className="bg-white dark:bg-[#0f1115] min-h-screen">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-[10px] md:text-sm font-black uppercase tracking-widest text-gray-400 hover:text-orange-600 transition-colors mb-6">
+          <ArrowLeft size={16} /> Back to Track
+        </button>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Image Gallery */}
-        <div className="space-y-4">
-          <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
-            <Image
-              src={
-                tire?.images?.[selectedImage]
-                  ? `${process.env.NEXT_PUBLIC_BASE_URL}${tire.images[selectedImage]}`
-                  : "/fallback.png"
-              }
-              alt={tire?.name || "Tire"}
-              fill
-              className="object-cover"
-            />
-            {discountPercentage > 0 && (
-              <Chip color="secondary">{`${discountPercentage}% OFF`}</Chip>
-            )}
-          </div>
-
-          <div className="flex gap-2 overflow-x-auto">
-            {tire.images.map((image, index) => (
-              <button
-                key={index}
-                onClick={() => setSelectedImage(index)}
-                className={`relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border-2 ${
-                  selectedImage === index ? "border-primary" : "border-gray-200"
-                }`}>
-                <Image
-                  src={`${process.env.NEXT_PUBLIC_BASE_URL}${image}`}
-                  alt={`${tire.name} ${index + 1}`}
-                  fill
-                  className="object-cover"
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Product Info */}
-        <div className="space-y-6">
-          {/* Brand and Category */}
-          <div className="flex items-center gap-4">
-            <div className="relative h-12 w-12">
+        <div className="grid gap-8 lg:grid-cols-2">
+          {/* Left Side: Gallery */}
+          <div className="space-y-4">
+            <div className="relative aspect-square rounded-[40px] overflow-hidden bg-[#f8f9fb] dark:bg-[#1a1d23] border border-gray-100 dark:border-gray-800 group">
               <Image
-                src={`${process.env.NEXT_PUBLIC_BASE_URL}${tire.brand.logo}`}
-                alt={tire.brand.name}
+                src={
+                  tire?.images?.[selectedImage]
+                    ? `${process.env.NEXT_PUBLIC_BASE_URL}${tire.images[selectedImage]}`
+                    : "/fallback.png"
+                }
+                alt={tire?.name}
                 fill
-                className="object-contain"
+                priority
+                className="object-contain p-6 md:p-12 group-hover:scale-110 transition-transform duration-700"
               />
             </div>
-            <div>
-              <p className="text-sm text-gray-500">{tire.brand.name}</p>
-              <Chip
-                size="sm"
-                variant="flat">
-                {tire.category.name}
-              </Chip>
+            <div className="flex gap-2 md:gap-4 overflow-x-auto pb-2 scrollbar-hide">
+              {tire?.images?.map((image: string, index: number) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedImage(index)}
+                  className={`relative h-16 w-16 md:h-24 md:w-24 flex-shrink-0 rounded-xl md:rounded-2xl overflow-hidden border-2 md:border-4 transition-all ${selectedImage === index ? "border-orange-500 scale-105" : "border-transparent opacity-60"}`}>
+                  <Image
+                    src={`${process.env.NEXT_PUBLIC_BASE_URL}${image}`}
+                    alt="tire thumb"
+                    fill
+                    className="object-cover"
+                  />
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Title and Description */}
-          <div>
-            <h1 className="text-3xl font-bold mb-2">{tire.name}</h1>
-            <p className="text-gray-600">{tire.description}</p>
-          </div>
-
-          {/* Vehicle Compatibility */}
-          <Card>
-            <CardBody className="p-4">
-              <h3 className="font-semibold mb-2">Vehicle Compatibility</h3>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <span className="text-gray-500">Year:</span> {tire.year.year}
-                </div>
-                <div>
-                  <span className="text-gray-500">Make:</span> {tire.make.make}
-                </div>
-                <div>
-                  <span className="text-gray-500">Model:</span>{" "}
-                  {tire.model.model}
-                </div>
-                <div>
-                  <span className="text-gray-500">Trim:</span> {tire.trim.trim}
+          {/* Right Side: Primary Info */}
+          <div className="flex flex-col">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="relative h-14 w-14 bg-white rounded-xl p-1 shadow-sm border border-gray-100">
+                <Image
+                  src={`${process.env.NEXT_PUBLIC_BASE_URL}${tire?.brand?.logo}`}
+                  alt="brand"
+                  fill
+                  className="object-contain p-1"
+                />
+              </div>
+              <div className="flex flex-col">
+                <h4 className="text-orange-600 font-black uppercase tracking-[0.2em] text-xs">
+                  {tire?.brand?.name}
+                </h4>
+                <div className="flex items-center gap-1">
+                  <Star
+                    size={12}
+                    className="fill-orange-500 text-orange-500"
+                  />
+                  <span className="text-xs font-bold">
+                    {averageRating.toFixed(1)} Pit Rating
+                  </span>
                 </div>
               </div>
-            </CardBody>
-          </Card>
+            </div>
 
-          {/* Tire Size */}
-          <div>
-            <h3 className="font-semibold mb-2">Tire Size</h3>
-            <Chip
-              size="lg"
-              variant="bordered"
-              className="text-lg font-mono">
-              {tire.tireSize.tireSize}
-            </Chip>
-          </div>
+            <h1 className="text-4xl md:text-6xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter leading-none mb-6">
+              {tire?.name}
+            </h1>
 
-          {/* Pricing */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              {tire.discountPrice ? (
-                <>
-                  <span className="text-3xl font-bold text-green-600">
-                    ${tire.discountPrice.toFixed(2)}
-                  </span>
-                  <span className="text-xl text-gray-500 line-through">
-                    ${tire.price.toFixed(2)}
-                  </span>
-                  <Chip
-                    color="danger"
-                    size="sm">
-                    Save ${(tire.price - tire.discountPrice).toFixed(2)}
-                  </Chip>
-                </>
-              ) : (
-                <span className="text-3xl font-bold">
-                  ${tire.price.toFixed(2)}
+            <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-orange-950 text-white rounded-[32px] p-8 mb-8 relative overflow-hidden group">
+              <Zap
+                className="absolute -right-8 -top-8 text-white/5 group-hover:scale-150 transition-transform duration-1000"
+                size={150}
+              />
+              <div className="relative z-10">
+                <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1">
+                  Bundle Total Value
+                </p>
+                <span className="text-5xl md:text-7xl font-black tracking-tighter italic">
+                  ${totalPrice.toFixed(2)}
                 </span>
-              )}
+              </div>
             </div>
-            <p className="text-sm text-gray-500">Price per tire</p>
-          </div>
 
-          {/* Stock Status */}
-          <div className="flex items-center gap-2">
-            {tire.stockQuantity > 0 ? (
-              <>
-                <Check className="h-5 w-5 text-green-500" />
-                <span className="text-green-600 font-medium">
-                  In Stock ({tire.stockQuantity} available)
-                </span>
-              </>
-            ) : (
-              <span className="text-red-500 font-medium">Out of Stock</span>
-            )}
-          </div>
+            {/* --- ৩. সেট সিলেকশন এবং বাই বাটন সেকশন (Original Colors & Direct Buy) --- */}
+            {/* --- ৩. সেট সিলেকশন এবং স্পোর্টি বাই বাটন সেকশন --- */}
+            {/* --- ৩. সেট সিলেকশন এবং রেসপনসিভ বাই বাটন সেকশন --- */}
+            <div className="space-y-4 md:space-y-6">
+              <div className="flex flex-wrap gap-2 md:gap-3">
+                {/* Pair (2) Button - Responsive Size */}
+                <button
+                  onClick={() => {
+                    setTireSet(2);
+                    setQuantity(1);
+                  }}
+                  className={`flex-1 min-w-[120px] py-3 md:py-5 rounded-2xl md:rounded-[24px] transition-all border-2 flex flex-col items-center gap-0.5 md:gap-1 shadow-lg ${
+                    tireSet === 2
+                      ? "bg-gradient-to-br from-rose-600 to-rose-900 border-rose-400 text-white scale-[1.02] md:scale-[1.05] ring-2 md:ring-4 ring-rose-500/20"
+                      : "bg-gradient-to-br from-rose-600 to-rose-900 border-rose-500 text-white/90 opacity-90"
+                  }`}>
+                  <span className="font-black text-[10px] md:text-sm uppercase italic">
+                    Buy Pair (2 PC)
+                  </span>
+                  <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-tighter opacity-80 text-rose-100">
+                    Safety & Balance
+                  </span>
+                </button>
 
-          {/* Quantity Selector */}
-          <div className="flex items-center gap-4">
-            <span className="font-medium">Quantity:</span>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="bordered"
-                onPress={() => setQuantity(Math.max(1, quantity - 1))}
-                disabled={quantity <= 1}>
-                <Minus className="h-4 w-4" />
-              </Button>
-              <span className="w-12 text-center font-medium">{quantity}</span>
-              <Button
-                size="sm"
-                variant="bordered"
-                onPress={() =>
-                  setQuantity(Math.min(tire.stockQuantity, quantity + 1))
-                }
-                disabled={quantity >= tire.stockQuantity}>
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+                {/* Full Set (4) Button - Responsive Size */}
+                <button
+                  onClick={() => {
+                    setTireSet(4);
+                    setQuantity(1);
+                  }}
+                  className={`flex-1 min-w-[120px] py-3 md:py-5 rounded-2xl md:rounded-[24px] transition-all border-2 flex flex-col items-center gap-0.5 md:gap-1 shadow-lg ${
+                    tireSet === 4
+                      ? "bg-gradient-to-br from-emerald-600 to-emerald-900 border-emerald-400 text-white scale-[1.02] md:scale-[1.05] ring-2 md:ring-4 ring-emerald-500/20"
+                      : "bg-gradient-to-br from-emerald-600 to-emerald-900 border-emerald-500 text-white/90 opacity-90"
+                  }`}>
+                  <span className="font-black text-[10px] md:text-sm uppercase italic">
+                    Full Set (4 PC)
+                  </span>
+                  <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-tighter opacity-80 text-emerald-100">
+                    Ultimate Performance
+                  </span>
+                </button>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button
-              size="lg"
-              className="flex-1 gap-2 py-2 px-3 bg-gradient-to-r from-orange-600 to-orange-400 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-500 flex items-center"
-              onPress={handleAddToCart}
-              disabled={addingToCart || tire.stockQuantity === 0}>
-              <ShoppingCart className="h-5 w-5" />
-              {addingToCart ? "Adding..." : "Add to Cart"}
-            </Button>
-            <Button
-              variant="bordered"
-              size="lg"
-              onPress={handleAddToWishlist}
-              disabled={addingToWishlist}>
-              <Heart className="h-5 w-5" />
-            </Button>
-          </div>
+                {/* ✅ মিশন ৪: Single Unit Toggle (Responsive) */}
+                {(tireSet === 2 || tireSet === 4) && (
+                  <button
+                    onClick={() => {
+                      setTireSet(1);
+                      setQuantity(1);
+                    }}
+                    className="w-full mt-1 py-3 rounded-xl md:rounded-2xl bg-gray-100 dark:bg-white/5 border border-dashed border-gray-300 dark:border-white/20 text-gray-600 dark:text-gray-300 font-black uppercase italic text-[9px] md:text-[11px] tracking-[0.1em] md:tracking-[0.2em] transition-all">
+                    <div className="flex items-center justify-center gap-2">
+                      <Zap
+                        size={12}
+                        className="text-orange-500"
+                      />{" "}
+                      RETURN TO SINGLE UNIT (1 PC)
+                    </div>
+                  </button>
+                )}
+              </div>
 
-          {/* Features */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-blue-500" />
-              <span className="text-sm">{tire.warranty}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Truck className="h-5 w-5 text-green-500" />
-              <span className="text-sm">Free Shipping</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Star className="h-5 w-5 text-yellow-500" />
-              <span className="text-sm">{tire.conditionInfo}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Info className="h-5 w-5 text-gray-500" />
-              <span className="text-sm">{tire.productLine}</span>
+              {/* Quantity & Buy Now Action Section (Mobile Optimized) */}
+              <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+                {/* Quantity Selector - Smaller on Mobile */}
+                <div className="flex items-center gap-3 bg-gray-50 dark:bg-[#1a1d23] p-1.5 md:p-2 rounded-2xl md:rounded-[24px] w-full md:w-fit border border-gray-100 dark:border-gray-800 justify-between px-4 md:px-6">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="h-10 w-10 md:h-12 md:w-12 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm text-gray-900 dark:text-white">
+                    <Minus size={16} />
+                  </button>
+                  <span className="text-lg md:text-xl font-black text-gray-900 dark:text-white">
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setQuantity(
+                        Math.min(tire?.stockQuantity || 100, quantity + 1)
+                      )
+                    }
+                    className="h-10 w-10 md:h-12 md:w-12 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm text-gray-900 dark:text-white">
+                    <Plus size={16} />
+                  </button>
+                </div>
+
+                {/* ✅ মিশন ৩: Sporty Buy Now Button (Responsive Font & Padding) */}
+                <Button
+                  isLoading={addingToCart}
+                  onPress={() =>
+                    addToCart({
+                      productType: "tire",
+                      productId: tire._id,
+                      quantity: finalQuantity,
+                    })
+                  }
+                  className="w-full md:flex-1 h-16 md:h-20 bg-gradient-to-r from-blue-900 to-blue-800 text-white rounded-2xl md:rounded-[24px] text-sm md:text-lg font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all group">
+                  <span className="flex items-center justify-center gap-2 md:gap-4">
+                    <ShoppingCart
+                      size={20}
+                      className="md:size-[24px]"
+                    />
+                    <span className="italic">ENGAGE BUY NOW</span>
+                    <div className="hidden sm:flex items-center -space-x-1">
+                      <ChevronRight
+                        size={18}
+                        className="opacity-40"
+                      />
+                      <ChevronRight
+                        size={18}
+                        className="opacity-70"
+                      />
+                      <ChevronRight size={18} />
+                    </div>
+                  </span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Detailed Information Tabs */}
-      <div className="mt-12">
-        <Tabs
-          aria-label="Tire Information"
-          className="w-full">
-          <Tab
-            key="specifications"
-            title="Specifications">
-            <Card>
-              <CardBody className="p-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div>
-                    <h3 className="font-semibold mb-4">Size & Dimensions</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Section Width:</span>
-                        <span>{tire.sectionWidth}mm</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Aspect Ratio:</span>
-                        <span>{tire?.ratio?.ratio}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Rim Diameter:</span>
-                        <span>{tire?.diameter?.diameter}"</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Tread Depth:</span>
-                        <span>{tire.treadDepth}/32"</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-4">Performance</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Load Index:</span>
-                        <span>{tire.loadIndex}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Speed Rating:</span>
-                        <span>{tire.speedRatingRange}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Max PSI:</span>
-                        <span>{tire.maxPSI}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Load Capacity:</span>
-                        <span>{tire.loadCapacity} lbs</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-4">Construction</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Construction Type:</span>
-                        <span>{tire.constructionType}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Tire Type:</span>
-                        <span>{tire.tireType}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Tread Pattern:</span>
-                        <span>{tire.treadPattern}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-4">Ratings</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Temperature Grade:</span>
-                        <span>{tire.temperatureGradeRange}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Traction Grade:</span>
-                        <span>{tire.tractionGradeRange}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Treadwear Grade:</span>
-                        <span>{tire.treadwearGradeRange}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-          </Tab>
+        {/* ✅ NEW SECTION: Strong Stats Highlights */}
+        <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-gray-50 dark:bg-[#1a1d23] p-6 rounded-[32px] border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center shadow-sm">
+            <Trophy
+              className="text-orange-600 mb-3"
+              size={28}
+            />
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+              Warranty
+            </p>
+            <p className="font-black italic text-gray-900 dark:text-white uppercase">
+              {tire?.mileageWarrantyRange || "No Limit"}
+            </p>
+          </div>
+          <div className="bg-gray-50 dark:bg-[#1a1d23] p-6 rounded-[32px] border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center shadow-sm">
+            <History
+              className="text-orange-600 mb-3"
+              size={28}
+            />
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+              Seasonality
+            </p>
+            <p className="font-black italic text-gray-900 dark:text-white uppercase">
+              {tire?.tireType || "Standard"}
+            </p>
+          </div>
+          <div className="bg-gray-50 dark:bg-[#1a1d23] p-6 rounded-[32px] border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center shadow-sm">
+            <Gauge
+              className="text-orange-600 mb-3"
+              size={28}
+            />
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+              Pressure
+            </p>
+            <p className="font-black italic text-gray-900 dark:text-white uppercase">
+              {tire?.maxPSI} PSI
+            </p>
+          </div>
+          <div className="bg-gray-50 dark:bg-[#1a1d23] p-6 rounded-[32px] border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center shadow-sm">
+            <ShieldCheck
+              className="text-orange-600 mb-3"
+              size={28}
+            />
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+              Stability
+            </p>
+            <p className="font-black italic text-gray-900 dark:text-white uppercase">
+              {tire?.tractionGradeRange}
+            </p>
+          </div>
+        </div>
 
-          <Tab
-            key="warranty"
-            title="Warranty & Support">
-            <Card>
-              <CardBody className="p-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">Warranty Information</h3>
-                    <p>{tire.warranty}</p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Mileage Warranty: {tire.mileageWarrantyRange}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-2">Brand Description</h3>
-                    <p>{tire.brand.description}</p>
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-          </Tab>
-
-          <Tab
-            key="reviews"
-            title={`Reviews (${reviews?.length || 0})`}>
-            <Card>
-              <CardBody className="p-6">
-                {/* Reviews Summary */}
-                <div className="mb-6 pb-6 border-b">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="text-3xl font-bold">
-                      {averageRating.toFixed(1)}
+        {/* Tab Sections */}
+        <div className="mt-16">
+          <Tabs
+            aria-label="Tire Specs"
+            variant="underlined"
+            classNames={{
+              tabList: "flex flex-wrap md:flex-nowrap gap-4 md:gap-8",
+              cursor: "bg-orange-600 h-1",
+              tab: "font-black uppercase tracking-widest text-[10px] md:text-sm",
+            }}>
+            <Tab
+              key="specs"
+              title="Performance Specs">
+              <Card className="mt-6 rounded-[32px] border-none bg-gray-50 dark:bg-[#1a1d23]">
+                <CardBody className="p-8 md:p-12">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-gray-900 dark:text-white">
+                    <div>
+                      <h3 className="text-orange-600 font-black uppercase text-xs mb-6 flex items-center gap-2">
+                        <Activity size={16} /> Geometry
+                      </h3>
+                      <div className="space-y-4 text-sm font-black italic">
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Section Width
+                          </span>
+                          {tire?.sectionWidth}mm
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Overall Diameter
+                          </span>
+                          {tire?.overallDiameter}
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Tread Depth
+                          </span>
+                          {tire?.treadDepth}
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Rim Width
+                          </span>
+                          {tire?.rimWidthRange}
+                        </p>
+                      </div>
                     </div>
                     <div>
-                      {renderStars(Math.round(averageRating))}
-                      <p className="text-sm text-gray-500 mt-1">
-                        Based on {reviews.length} review
-                        {reviews.length !== 1 ? "s" : ""}
+                      <h3 className="text-orange-600 font-black uppercase text-xs mb-6 flex items-center gap-2">
+                        <Package size={16} /> Load & PSI
+                      </h3>
+                      <div className="space-y-4 text-sm font-black italic">
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Load Index
+                          </span>
+                          {tire?.loadIndex}
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Load Capacity
+                          </span>
+                          {tire?.loadCapacity}
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Load Range
+                          </span>
+                          {tire?.loadRange}
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Max PSI
+                          </span>
+                          {tire?.maxPSI}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-orange-600 font-black uppercase text-xs mb-6 flex items-center gap-2">
+                        <ShieldCheck size={16} /> Quality
+                      </h3>
+                      <div className="space-y-4 text-sm font-black italic">
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Construction
+                          </span>
+                          {tire?.constructionType}
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Traction
+                          </span>
+                          {tire?.tractionGradeRange}
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Treadwear
+                          </span>
+                          {tire?.treadwearGradeRange}
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Temperature
+                          </span>
+                          {tire?.temperatureGradeRange}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+            </Tab>
+
+            <Tab
+              key="description"
+              title="Description">
+              <Card className="mt-6 rounded-[32px] border-none bg-gray-50 dark:bg-[#1a1d23]">
+                <CardBody className="p-8 md:p-12">
+                  <p className="text-gray-600 dark:text-gray-400 font-medium mb-8 leading-relaxed italic">
+                    "{tire?.description}"
+                  </p>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="p-6 bg-white dark:bg-black/20 rounded-2xl border border-gray-100 dark:border-gray-800">
+                      <h4 className="font-black uppercase text-[10px] text-orange-600 mb-2">
+                        Condition Info
+                      </h4>
+                      <p className="font-black italic text-sm text-gray-900 dark:text-white">
+                        {tire?.conditionInfo}
+                      </p>
+                    </div>
+                    <div className="p-6 bg-white dark:bg-black/20 rounded-2xl border border-gray-100 dark:border-gray-800">
+                      <h4 className="font-black uppercase text-[10px] text-orange-600 mb-2">
+                        Product Line
+                      </h4>
+                      <p className="font-black italic text-sm text-gray-900 dark:text-white">
+                        {tire?.productLine}
                       </p>
                     </div>
                   </div>
+                </CardBody>
+              </Card>
+            </Tab>
 
-                  {/* Rating Distribution */}
-                  {/* {reviewStats.ratingDistribution && (
-                    <div className="mt-4 space-y-2">
-                      {[5, 4, 3, 2, 1].map((rating) => (
-                        <div key={rating} className="flex items-center gap-2">
-                          <div className="w-12 text-sm text-right">{rating} stars</div>
-                          <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-yellow-400"
-                              style={{
-                                width: `${
-                                  reviewStats.reviewCount
-                                    ? (reviewStats.ratingDistribution[rating] / reviewStats.reviewCount) * 100
-                                    : 0
-                                }%`,
-                              }}
-                            ></div>
-                          </div>
-                          <div className="w-8 text-sm text-gray-500">{reviewStats.ratingDistribution[rating] || 0}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )} */}
-
-                  {user && !showReviewForm && (
-                    <Button
-                      color="primary"
-                      onPress={() => setShowReviewForm(true)}
-                      className="gap-2">
-                      <Plus className="h-4 w-4" />
-                      Write a Review
-                    </Button>
-                  )}
+            <Tab
+              key="reviews"
+              title={`Pit Stop Reviews (${reviews.length})`}>
+              <div className="mt-8 grid gap-8 lg:grid-cols-3">
+                <div className="lg:col-span-1">
+                  <div className="bg-gradient-to-br from-orange-600 to-orange-500 text-white p-8 rounded-[40px] text-center sticky top-24 shadow-2xl">
+                    <h2 className="text-7xl font-black italic mb-2">
+                      {averageRating.toFixed(1)}
+                    </h2>
+                    <p className="uppercase font-black text-[10px] mb-8 tracking-widest opacity-80">
+                      Track Performance
+                    </p>
+                    {user && !hasAlreadyReviewed && !showReviewForm && (
+                      <Button
+                        onPress={() => setShowReviewForm(true)}
+                        className="w-full bg-white text-orange-600 font-black uppercase h-14 rounded-2xl shadow-xl hover:scale-105 transition-all">
+                        Write Review
+                      </Button>
+                    )}
+                    {hasAlreadyReviewed && (
+                      <div className="flex flex-col items-center gap-2 bg-black/10 p-4 rounded-2xl">
+                        <ShieldAlert size={20} />
+                        <span className="text-[10px] font-black uppercase">
+                          Reported from Pit
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Review Form */}
-                {showReviewForm && (
-                  <Card className="mb-6">
-                    <CardBody className="p-4">
-                      <h3 className="font-semibold mb-4">
-                        {editingReview ? "Edit Review" : "Write a Review"}
-                      </h3>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium mb-2">
-                            Rating
-                          </label>
-                          {renderStars(reviewForm.rating, true, (rating: any) =>
-                            setReviewForm((prev) => ({ ...prev, rating }))
-                          )}
+                <div className="lg:col-span-2 space-y-6">
+                  {showReviewForm && !hasAlreadyReviewed && (
+                    <Card className="rounded-[32px] p-2 bg-orange-50 dark:bg-orange-950/10 border-2 border-dashed border-orange-200">
+                      <CardBody className="p-6">
+                        <div className="flex justify-between mb-6">
+                          <h3 className="font-black uppercase text-sm italic">
+                            Post Your Record
+                          </h3>
+                          <button
+                            onClick={() => setShowReviewForm(false)}
+                            className="text-gray-400 hover:text-orange-600">
+                            <X size={20} />
+                          </button>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-2">
-                            Comment
-                          </label>
-                          <textarea
-                            value={reviewForm.comment}
-                            onChange={(e) =>
-                              setReviewForm((prev) => ({
-                                ...prev,
-                                comment: e.target.value,
-                              }))
-                            }
-                            placeholder="Share your experience with this tire..."
-                            className="w-full p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-                            rows={4}
-                            maxLength={500}
-                          />
-                          <p className="text-xs text-gray-500 mt-1">
-                            {reviewForm.comment.length}/500 characters
-                          </p>
+                        <div className="flex gap-2 mb-6">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star
+                              key={s}
+                              onClick={() =>
+                                setReviewForm((p) => ({ ...p, rating: s }))
+                              }
+                              className={`cursor-pointer transition-all ${s <= reviewForm.rating ? "fill-orange-500 text-orange-500 scale-125" : "text-gray-300"}`}
+                            />
+                          ))}
                         </div>
-                        <div className="flex gap-2">
-                          <Button
-                            color="primary"
-                            onPress={handleSubmitReview}
-                            disabled={addingReview || updatingReview}>
-                            {addingReview || updatingReview
-                              ? "Submitting..."
-                              : editingReview
-                                ? "Update Review"
-                                : "Submit Review"}
-                          </Button>
-                          <Button
-                            variant="bordered"
-                            onPress={handleCancelReview}>
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    </CardBody>
-                  </Card>
-                )}
+                        <textarea
+                          value={reviewForm.comment}
+                          onChange={(e) =>
+                            setReviewForm((p) => ({
+                              ...p,
+                              comment: e.target.value,
+                            }))
+                          }
+                          className="w-full p-6 bg-white dark:bg-black rounded-3xl min-h-[150px] mb-6 border-none outline-none font-medium"
+                          placeholder="Describe the performance..."
+                        />
+                        <Button
+                          onPress={() =>
+                            addReview({
+                              product: tire._id,
+                              productType: "tire",
+                              rating: reviewForm.rating,
+                              comment: reviewForm.comment,
+                            })
+                          }
+                          className="bg-orange-600 text-white font-black uppercase px-12 h-12 rounded-xl shadow-lg">
+                          Submit Review
+                        </Button>
+                      </CardBody>
+                    </Card>
+                  )}
 
-                {/* Reviews List */}
-                <div className="space-y-4">
-                  {reviewsLoading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                      <p>Loading reviews...</p>
-                    </div>
-                  ) : reviews.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500">
-                        No reviews yet. Be the first to review this tire!
-                      </p>
-                    </div>
-                  ) : (
-                    reviews.map((review: any) => (
-                      <Card
-                        key={review._id}
-                        className="border">
-                        <CardBody className="p-4">
-                          <div className="flex justify-between items-start mb-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                                <span className="text-sm font-medium">
-                                  {review.user?.firstName?.charAt(0) || "U"}
-                                </span>
+                  <div className="space-y-4">
+                    {reviews.length === 0 ? (
+                      <div className="text-center py-16 bg-gray-50 dark:bg-gray-900 rounded-[40px] border border-dashed border-gray-200">
+                        <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">
+                          No marks on the road yet.
+                        </p>
+                      </div>
+                    ) : (
+                      reviews.map((r: any) => (
+                        <div
+                          key={r._id}
+                          className="bg-gray-50 dark:bg-[#1a1d23] p-8 rounded-[40px] border border-gray-100 dark:border-gray-800 transition-all hover:shadow-lg">
+                          <div className="flex justify-between mb-4">
+                            <div className="flex gap-4">
+                              <div className="h-12 w-12 bg-orange-100 rounded-2xl flex items-center justify-center font-black text-orange-600 shadow-inner">
+                                {r.user?.firstName?.[0]}
                               </div>
                               <div>
-                                <p className="font-medium">
-                                  {review.user?.firstName +
-                                    " " +
-                                    review?.user?.lastName || "Anonymous"}
+                                <p className="font-black uppercase italic text-sm text-gray-900 dark:text-white">
+                                  {r.user?.firstName} {r.user?.lastName}
                                 </p>
-                                <div className="flex items-center gap-2">
-                                  {renderStars(review.rating)}
-                                  <span className="text-sm text-gray-500">
-                                    {new Date(
-                                      review.createdAt
-                                    ).toLocaleDateString()}
-                                  </span>
+                                <div className="flex gap-0.5 mt-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      size={10}
+                                      className={
+                                        i < r.rating
+                                          ? "fill-orange-500 text-orange-500"
+                                          : "text-gray-300"
+                                      }
+                                    />
+                                  ))}
                                 </div>
                               </div>
                             </div>
-
-                            {user && user._id === review.user?._id && (
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="light"
-                                  onPress={() => handleEditReview(review)}>
-                                  Edit
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="light"
-                                  color="danger"
-                                  onPress={() => handleDeleteReview(review._id)}
-                                  disabled={deletingReview}>
-                                  Delete
-                                </Button>
-                              </div>
+                            {user?._id === r.user?._id && (
+                              <button
+                                onClick={() => deleteReview(r._id)}
+                                className="text-red-500 p-2 hover:bg-white dark:hover:bg-gray-800 rounded-xl transition-all">
+                                <Trash2 size={18} />
+                              </button>
                             )}
                           </div>
-
-                          {review.comment && (
-                            <p className="text-gray-700">{review.comment}</p>
-                          )}
-                        </CardBody>
-                      </Card>
-                    ))
-                  )}
+                          <p className="text-gray-600 dark:text-gray-400 font-medium italic text-sm leading-relaxed">
+                            "{r.comment}"
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
-              </CardBody>
-            </Card>
-          </Tab>
-        </Tabs>
+              </div>
+            </Tab>
+          </Tabs>
+        </div>
       </div>
     </div>
   );

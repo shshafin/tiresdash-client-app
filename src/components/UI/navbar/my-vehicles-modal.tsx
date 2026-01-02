@@ -9,8 +9,7 @@ import {
   ModalFooter,
 } from "@heroui/modal";
 import { Button } from "@heroui/button";
-import { Card, CardBody } from "@heroui/card";
-import { Car, AlertCircle, Trash2 } from "lucide-react";
+import { Car, AlertCircle, Trash2, ShieldCheck, X, Gauge } from "lucide-react";
 import { Spinner } from "@heroui/spinner";
 import { toast } from "sonner";
 
@@ -33,7 +32,6 @@ export function VehicleModal({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [removingIndex, setRemovingIndex] = useState<number | null>(null);
-  const [showConfirmation, setShowConfirmation] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -44,65 +42,30 @@ export function VehicleModal({
   const loadVehicles = () => {
     setLoading(true);
     setError(null);
-
     try {
-      // Only run in browser environment
       if (typeof window !== "undefined") {
         const savedVehicles = localStorage.getItem("userVehicles");
-
         if (savedVehicles) {
-          const parsedVehicles = JSON.parse(savedVehicles);
-          setVehicles(
-            Array.isArray(parsedVehicles) ? parsedVehicles : [parsedVehicles]
-          );
+          const list = JSON.parse(savedVehicles);
+          setVehicles(Array.isArray(list) ? list : [list]);
         } else {
           setVehicles([]);
         }
       }
     } catch (err) {
-      console.error("Error loading vehicles from localStorage:", err);
-      setError("Could not load your vehicles. Please try again.");
+      setError("Failed to access your garage.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRemoveClick = (index: number) => {
-    setRemovingIndex(index);
-    setShowConfirmation(true);
-  };
-
-  const confirmRemove = () => {
-    if (removingIndex === null) return;
-
-    try {
-      const updatedVehicles = [...vehicles];
-      const removedVehicle = updatedVehicles[removingIndex];
-      updatedVehicles.splice(removingIndex, 1);
-
-      // Update localStorage
-      localStorage.setItem("userVehicles", JSON.stringify(updatedVehicles));
-
-      // Update state
-      setVehicles(updatedVehicles);
-
-      // Dispatch a custom event to notify other components
-      window.dispatchEvent(new Event("vehiclesUpdated"));
-
-      // Show success message
-      toast.success(`Vehicle removed successfully`);
-
-      // Reset confirmation state
-      setShowConfirmation(false);
-      setRemovingIndex(null);
-    } catch (err) {
-      console.error("Error removing vehicle:", err);
-      toast.error("Failed to remove vehicle. Please try again.");
-    }
-  };
-
-  const cancelRemove = () => {
-    setShowConfirmation(false);
+  const confirmRemove = (index: number) => {
+    const updatedVehicles = [...vehicles];
+    updatedVehicles.splice(index, 1);
+    localStorage.setItem("userVehicles", JSON.stringify(updatedVehicles));
+    setVehicles(updatedVehicles);
+    window.dispatchEvent(new Event("vehiclesUpdated"));
+    toast.success(`Vehicle removed from your fleet`);
     setRemovingIndex(null);
   };
 
@@ -110,116 +73,148 @@ export function VehicleModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      size="lg">
+      size="lg"
+      backdrop="blur"
+      classNames={{
+        base: "bg-white dark:bg-[#0b0d11] border border-gray-100 dark:border-gray-800 rounded-[2.5rem]",
+        header: "border-b border-gray-50 dark:border-white/5 pb-4",
+      }}>
       <ModalContent>
-        <ModalHeader className="flex items-center gap-2">
-          <Car className="h-5 w-5 text-primary" />
-          <span>My Vehicles</span>
+        <ModalHeader className="flex flex-col gap-1 p-8">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-orange-600 rounded-xl shadow-[0_10px_20px_rgba(249,115,22,0.3)]">
+              <Gauge className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-black uppercase italic tracking-tighter text-gray-900 dark:text-white leading-none">
+                Garage Dashboard
+              </h2>
+              <p className="text-[10px] font-bold text-orange-500 uppercase tracking-[0.3em] mt-1">
+                Performance Fleet
+              </p>
+            </div>
+          </div>
         </ModalHeader>
 
-        <ModalBody>
+        <ModalBody className="p-8">
           {loading ? (
-            <div className="flex justify-center items-center py-8">
+            <div className="flex flex-col justify-center items-center py-12 gap-4">
               <Spinner
-                color="primary"
+                color="warning"
                 size="lg"
               />
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <AlertCircle className="h-10 w-10 text-danger mb-2" />
-              <p className="text-danger">{error}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 animate-pulse">
+                Scanning Garage...
+              </p>
             </div>
           ) : vehicles.length === 0 ? (
-            <div className="text-center py-8">
-              <Car className="h-16 w-16 mx-auto text-default-300 mb-4" />
-              <h3 className="text-xl font-semibold text-default-700 mb-2">
-                No Vehicles Found
+            <div className="text-center py-12 bg-gray-50 dark:bg-white/5 rounded-[2.5rem] border border-dashed border-gray-200 dark:border-gray-800">
+              <Car className="h-20 w-20 mx-auto text-gray-200 dark:text-gray-800 mb-4" />
+              <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase italic mb-2">
+                No Active Vehicle
               </h3>
-              <p className="text-default-500 mb-6">
-                You haven't added any vehicles yet. Add your first vehicle to
-                see it here.
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                Setup your first ride to begin
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
               {vehicles.map((vehicle, index) => (
-                <Card
+                <div
                   key={index}
-                  className="border border-default-200">
-                  <CardBody>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-lg font-semibold text-default-700">
-                          {vehicle.year} {vehicle.make} {vehicle.model}
-                        </h3>
-                        {vehicle.trim && (
-                          <p className="text-default-500 text-sm">
-                            Trim: {vehicle.trim}
-                          </p>
-                        )}
-                        {vehicle.tireSize && (
-                          <p className="text-default-500 text-sm">
-                            Tire Size: {vehicle.tireSize}
-                          </p>
-                        )}
-                      </div>
-                      <Button
-                        color="danger"
-                        variant="light"
-                        size="sm"
-                        startContent={<Trash2 className="h-4 w-4" />}
-                        onPress={() => handleRemoveClick(index)}>
-                        Remove
-                      </Button>
-                    </div>
-                  </CardBody>
-                </Card>
-              ))}
-            </div>
-          )}
+                  className="group relative bg-gray-50 dark:bg-[#15181c] rounded-[2rem] border border-transparent hover:border-orange-500/50 transition-all duration-500 overflow-hidden">
+                  {/* ✅ Background Accent: No external image needed, using a gradient car-like shape */}
+                  <div className="absolute right-[-10%] bottom-[-20%] opacity-5 group-hover:opacity-20 transition-all duration-700 pointer-events-none group-hover:scale-110">
+                    <Car
+                      size={160}
+                      strokeWidth={1}
+                      className="text-orange-600 rotate-[-15deg]"
+                    />
+                  </div>
 
-          {/* Confirmation Modal */}
-          {showConfirmation && removingIndex !== null && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                <h3 className="text-lg text-black font-semibold mb-2">
-                  Remove Vehicle
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Are you sure you want to remove this vehicle?
-                  {vehicles[removingIndex] && (
-                    <span className="font-medium block mt-2">
-                      {vehicles[removingIndex].year}{" "}
-                      {vehicles[removingIndex].make}{" "}
-                      {vehicles[removingIndex].model}
-                    </span>
-                  )}
-                </p>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    color="success"
-                    variant="light"
-                    onPress={cancelRemove}>
-                    Cancel
-                  </Button>
-                  <Button
-                    color="danger"
-                    onPress={confirmRemove}>
-                    Remove
-                  </Button>
+                  <div className="flex justify-between items-center p-6 relative z-10">
+                    <div className="flex gap-4 items-center">
+                      {/* Car Icon Box with Sporty Glow */}
+                      <div className="h-16 w-16 bg-white dark:bg-black rounded-2xl border border-gray-100 dark:border-gray-800 flex items-center justify-center shadow-inner relative overflow-hidden group-hover:border-orange-500/50 transition-colors">
+                        <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <Car
+                          size={32}
+                          className="text-gray-900 dark:text-white group-hover:text-orange-500 transition-colors"
+                        />
+                      </div>
+
+                      <div>
+                        <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase italic leading-none mb-1">
+                          {vehicle.year} {vehicle.make}
+                        </h3>
+                        <p className="text-xs font-black text-orange-600 uppercase italic tracking-widest">
+                          {vehicle.model}
+                        </p>
+
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {vehicle.trim && (
+                            <span className="flex items-center gap-1 text-[9px] font-black text-gray-500 dark:text-gray-400 uppercase bg-white dark:bg-black/40 px-2 py-1 rounded-lg border border-gray-100 dark:border-gray-800">
+                              <ShieldCheck
+                                size={10}
+                                className="text-orange-500"
+                              />{" "}
+                              {vehicle.trim}
+                            </span>
+                          )}
+                          {vehicle.tireSize && (
+                            <span className="flex items-center gap-1 text-[9px] font-black text-gray-500 dark:text-gray-400 uppercase bg-white dark:bg-black/40 px-2 py-1 rounded-lg border border-gray-100 dark:border-gray-800">
+                              R-SPEC: {vehicle.tireSize}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center">
+                      {removingIndex === index ? (
+                        <div className="flex gap-2 animate-in fade-in slide-in-from-right-2">
+                          <Button
+                            isIconOnly
+                            radius="full"
+                            size="sm"
+                            variant="flat"
+                            onPress={() => setRemovingIndex(null)}
+                            className="dark:bg-gray-800">
+                            <X size={14} />
+                          </Button>
+                          <Button
+                            size="sm"
+                            color="danger"
+                            className="font-black uppercase italic text-[10px] h-8"
+                            onPress={() => confirmRemove(index)}>
+                            Remove
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          isIconOnly
+                          className="bg-white dark:bg-gray-800 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 shadow-sm opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100"
+                          radius="full"
+                          onPress={() => setRemovingIndex(index)}>
+                          <Trash2 size={18} />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Decorative Racing Stripe */}
+                  <div className="h-1 w-0 group-hover:w-full bg-gradient-to-r from-orange-600 to-orange-400 transition-all duration-700" />
                 </div>
-              </div>
+              ))}
             </div>
           )}
         </ModalBody>
 
-        <ModalFooter>
+        <ModalFooter className="p-8">
           <Button
-            color="default"
-            variant="light"
+            className="w-full h-14 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black font-black uppercase italic tracking-[0.2em] hover:bg-orange-600 dark:hover:bg-orange-500 dark:hover:text-white transition-all shadow-xl shadow-orange-500/10"
             onPress={onClose}>
-            Close
+            Exit Garage
           </Button>
         </ModalFooter>
       </ModalContent>

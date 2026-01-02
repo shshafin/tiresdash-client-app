@@ -2,7 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@heroui/button";
-import { HelpCircle, Loader2 } from "lucide-react";
+import {
+  HelpCircle,
+  Loader2,
+  CheckCircle,
+  Zap,
+  Ruler,
+  Activity,
+  ArrowLeft,
+  ArrowRight,
+} from "lucide-react";
 import { useGetTireWidths } from "@/src/hooks/tireWidth.hook";
 import { useGetTireRatios } from "@/src/hooks/tireRatio.hook";
 import { useGetTireDiameters } from "@/src/hooks/tireDiameter.hook";
@@ -12,464 +21,237 @@ import { useGetWheelDiameters } from "@/src/hooks/wheelDiameter.hook";
 import Link from "next/link";
 import { toast } from "sonner";
 
-interface SizeSelectorProps {
-  setMainStep: (step: any) => void;
-  selectedSize: any;
-  setSelectedSize: (size: any) => void;
-}
-
-const SizeSelector = ({
-  setMainStep,
-  selectedSize,
-  setSelectedSize,
-}: SizeSelectorProps) => {
+const SizeSelector = ({ setMainStep, selectedSize, setSelectedSize }: any) => {
   const [activeStep, setActiveStep] = useState(1);
-  const [selectedWidth, setSelectedWidth] = useState<any>(null);
-  const [selectedRatio, setSelectedRatio] = useState<any>(null);
-  const [selectedDiameter, setSelectedDiameter] = useState<any>(null);
   const [productType, setProductType] = useState<"tire" | "wheel">("tire");
   const [showAllWidths, setShowAllWidths] = useState(false);
 
-  // Tire size hooks
-  const {
-    data: tireWidths = {},
-    isLoading: tireWidthsLoading,
-    isError: tireWidthsError,
-  } = useGetTireWidths({});
-  const {
-    data: tireRatios = {},
-    isLoading: tireRatiosLoading,
-    isError: tireRatiosError,
-  } = useGetTireRatios({});
-  const {
-    data: tireDiameters = {},
-    isLoading: tireDiametersLoading,
-    isError: tireDiametersError,
-  } = useGetTireDiameters({});
+  // 🛰️ Tire Hooks
+  const { data: tW, isLoading: tWL } = useGetTireWidths({});
+  const { data: tR, isLoading: tRL } = useGetTireRatios({});
+  const { data: tD, isLoading: tDL } = useGetTireDiameters({});
 
-  // Wheel size hooks
-  const {
-    data: wheelWidths = {},
-    isLoading: wheelWidthsLoading,
-    isError: wheelWidthsError,
-  } = useGetWheelWidths({});
-  const {
-    data: wheelRatios = {},
-    isLoading: wheelRatiosLoading,
-    isError: wheelRatiosError,
-  } = useGetWheelRatios({});
-  const {
-    data: wheelDiameters = {},
-    isLoading: wheelDiametersLoading,
-    isError: wheelDiametersError,
-  } = useGetWheelDiameters({});
+  // 🛰️ Wheel Hooks
+  const { data: wW, isLoading: wWL } = useGetWheelWidths({});
+  const { data: wR, isLoading: wRL } = useGetWheelRatios({});
+  const { data: wD, isLoading: wDL } = useGetWheelDiameters({});
 
-  // Determine current options and loading/error states based on product type
-  const widthOptions =
-    productType === "tire" ? tireWidths?.data || [] : wheelWidths?.data || [];
-  const ratioOptions =
-    productType === "tire" ? tireRatios?.data || [] : wheelRatios?.data || [];
+  const widthOptions = productType === "tire" ? tW?.data || [] : wW?.data || [];
+  const ratioOptions = productType === "tire" ? tR?.data || [] : wR?.data || [];
   const diameterOptions =
-    productType === "tire"
-      ? tireDiameters?.data || []
-      : wheelDiameters?.data || [];
-  const isWidthLoading =
-    productType === "tire" ? tireWidthsLoading : wheelWidthsLoading;
-  const isRatioLoading =
-    productType === "tire" ? tireRatiosLoading : wheelRatiosLoading;
-  const isDiameterLoading =
-    productType === "tire" ? tireDiametersLoading : wheelDiametersLoading;
-  const isWidthError =
-    productType === "tire" ? tireWidthsError : wheelWidthsError;
-  const isRatioError =
-    productType === "tire" ? tireRatiosError : wheelRatiosError;
-  const isDiameterError =
-    productType === "tire" ? tireDiametersError : wheelDiametersError;
+    productType === "tire" ? tD?.data || [] : wD?.data || [];
 
   const isLoading =
-    isWidthLoading ||
-    (activeStep === 2 && isRatioLoading) ||
-    (activeStep === 3 && isDiameterLoading);
+    tWL ||
+    wWL ||
+    (activeStep === 2 && (tRL || wRL)) ||
+    (activeStep === 3 && (tDL || wDL));
 
-  const isError =
-    isWidthError ||
-    (activeStep === 2 && isRatioError) ||
-    (activeStep === 3 && isDiameterError);
-
-  // Limit displayed widths if there are many
-  const displayedWidths = showAllWidths
-    ? widthOptions
-    : widthOptions.slice(0, 18);
-
-  // Reset selections when product type changes
-  useEffect(() => {
-    setSelectedWidth(null);
-    setSelectedRatio(null);
-    setSelectedDiameter(null);
-    setActiveStep(1);
-    setShowAllWidths(false);
-    setSelectedSize(null);
-  }, [productType, setSelectedSize]);
-
-  // Initialize selections from selectedSize prop if available
-  useEffect(() => {
-    if (selectedSize) {
-      setSelectedWidth(selectedSize.width || null);
-      setSelectedRatio(selectedSize.ratio || null);
-      setSelectedDiameter(selectedSize.diameter || null);
-      setProductType(selectedSize.productType || "tire");
-      // Set active step based on the furthest completed selection
-      if (selectedSize.diameter) {
-        setActiveStep(3);
-      } else if (selectedSize.ratio) {
-        setActiveStep(2);
-      } else if (selectedSize.width) {
-        setActiveStep(1);
-      }
-    }
-  }, [selectedSize]);
-
-  // Determine if a step is accessible
-  const canAccessStep = (step: number) => {
-    switch (step) {
-      case 1:
-        return true; // Width is always accessible
-      case 2:
-        return !!selectedWidth; // Ratio requires width
-      case 3:
-        return !!selectedWidth && !!selectedRatio; // Diameter requires width and ratio
-      default:
-        return false;
-    }
-  };
-
+  // Auto-Step & Selection Handlers
   const handleWidthSelect = (width: any) => {
-    setSelectedWidth(width);
-    setSelectedRatio(null);
-    setSelectedDiameter(null);
-    setSelectedSize(null);
-    if (canAccessStep(2)) {
-      setActiveStep(2);
-    }
+    setSelectedSize({
+      ...selectedSize,
+      width,
+      ratio: null,
+      diameter: null,
+      productType,
+    });
+    setActiveStep(2); // 🏎️ Auto-advance
   };
 
   const handleRatioSelect = (ratio: any) => {
-    setSelectedRatio(ratio);
-    setSelectedDiameter(null);
-    setSelectedSize(null);
-    if (canAccessStep(3)) {
-      setActiveStep(3);
-    }
+    setSelectedSize({ ...selectedSize, ratio, diameter: null, productType });
+    setActiveStep(3); // 🏎️ Auto-advance
   };
 
   const handleDiameterSelect = (diameter: any) => {
-    setSelectedDiameter(diameter);
-    setSelectedSize({
-      width: selectedWidth,
-      ratio: selectedRatio,
-      diameter,
-      productType,
-    });
+    setSelectedSize({ ...selectedSize, diameter, productType });
+    // Final step, stays here to show "View Products" button
   };
 
-  const handleViewProducts = () => {
-    setMainStep(3);
+  const canAccessStep = (step: number) => {
+    if (step === 1) return true;
+    if (step === 2) return !!selectedSize?.width;
+    if (step === 3) return !!selectedSize?.width && !!selectedSize?.ratio;
+    return false;
   };
 
-  const handleStepClick = (step: number) => {
-    if (canAccessStep(step)) {
-      setActiveStep(step);
-    } else {
-      toast.error(`Please complete the previous steps to access step ${step}.`);
-    }
+  const handleStepNavigation = (step: number) => {
+    if (canAccessStep(step)) setActiveStep(step);
+    else
+      toast.error(`Stage 0${step - 1} incomplete!`, {
+        className: "font-black italic uppercase text-[10px]",
+      });
   };
-
-  const canProceed = selectedWidth && selectedRatio && selectedDiameter;
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6">
-      {/* Product Type Toggle */}
-      <div className="flex justify-center mb-6">
-        <div className="flex bg-gray-100 rounded-lg p-1">
-          <Button
-            className={`px-8 py-2 rounded-md transition-colors ${
-              productType === "tire"
-                ? "bg-slate-600 text-white"
-                : "bg-transparent text-gray-600 hover:bg-gray-200"
-            }`}
-            onPress={() => setProductType("tire")}
-          >
-            Tire
-          </Button>
-          <Button
-            className={`px-8 py-2 rounded-md transition-colors ${
-              productType === "wheel"
-                ? "bg-slate-600 text-white"
-                : "bg-transparent text-gray-600 hover:bg-gray-200"
-            }`}
-            onPress={() => setProductType("wheel")}
-          >
-            Wheel
-          </Button>
+    <div className="w-full max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
+      {/* 🏎️ Sporty Toggle: Tire vs Wheel */}
+      <div className="flex justify-center">
+        <div className="inline-flex bg-gray-100 dark:bg-white/5 p-1 rounded-2xl border dark:border-gray-800">
+          {["tire", "wheel"].map((type) => (
+            <button
+              key={type}
+              onClick={() => setProductType(type as any)}
+              className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase italic tracking-widest transition-all ${
+                productType === type
+                  ? "bg-orange-600 text-white shadow-lg shadow-orange-600/20"
+                  : "text-gray-400 hover:text-orange-500"
+              }`}>
+              {type}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Step Indicators */}
-      <div className="flex items-center justify-center mb-8 gap-4">
-        <div className="flex items-center gap-2">
+      {/* 🏁 Gear Progress Tracker */}
+      <div className="flex items-center justify-center gap-4 py-4">
+        {[
+          { id: 1, lab: "Width" },
+          { id: 2, lab: "Ratio" },
+          { id: 3, lab: "Rim" },
+        ].map((s) => (
           <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer ${
-              canAccessStep(1)
-                ? activeStep === 1
-                  ? "bg-orange-500 text-white"
-                  : "bg-green-500 text-white"
-                : "bg-gray-200 text-gray-500"
-            }`}
-            onClick={() => handleStepClick(1)}
-          >
-            1
-          </div>
-          <span
-            className={`font-medium ${canAccessStep(1) ? "text-gray-800" : "text-gray-400"}`}
-          >
-            Width
-          </span>
-        </div>
-
-        <div className="w-8 h-0.5 bg-gray-300"></div>
-
-        <div className="flex items-center gap-2">
-          <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer ${
-              canAccessStep(2)
-                ? activeStep === 2
-                  ? "bg-orange-500 text-white"
-                  : "bg-green-500 text-white"
-                : "bg-gray-200 text-gray-500"
-            }`}
-            onClick={() => handleStepClick(2)}
-          >
-            2
-          </div>
-          <span
-            className={`font-medium ${canAccessStep(2) ? "text-gray-800" : "text-gray-400"}`}
-          >
-            Ratio
-          </span>
-        </div>
-
-        <div className="w-8 h-0.5 bg-gray-300"></div>
-
-        <div className="flex items-center gap-2">
-          <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer ${
-              canAccessStep(3)
-                ? activeStep === 3
-                  ? "bg-orange-500 text-white"
-                  : "bg-green-500 text-white"
-                : "bg-gray-200 text-gray-500"
-            }`}
-            onClick={() => handleStepClick(3)}
-          >
-            3
-          </div>
-          <span
-            className={`font-medium ${canAccessStep(3) ? "text-gray-800" : "text-gray-400"}`}
-          >
-            Diameter
-          </span>
-        </div>
-
-        <Link href={"/contact"}>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="ml-4 text-blue-600 gap-1"
-            startContent={<HelpCircle className="h-4 w-4" />}
-          >
-            need help?
-          </Button>
-        </Link>
-      </div>
-
-      {/* Selected Size Display */}
-      {(selectedWidth || selectedRatio || selectedDiameter) && (
-        <div className="text-center mb-6">
-          <div className="text-lg font-semibold text-gray-700">
-            Selected Size:{" "}
-            {productType === "tire" ? (
-              <>
-                {selectedWidth?.width || "___"}/{selectedRatio?.ratio || "__"}R
-                {selectedDiameter?.diameter || "__"}
-              </>
-            ) : (
-              <>
-                {selectedWidth?.width || "___"}/{selectedRatio?.ratio || "__"}x
-                {selectedDiameter?.diameter || "__"}
-              </>
+            key={s.id}
+            className="flex items-center gap-2">
+            <button
+              onClick={() => handleStepNavigation(s.id)}
+              className={`size-10 rounded-xl flex items-center justify-center text-xs font-black italic border-2 transition-all ${
+                activeStep === s.id
+                  ? "bg-orange-600 border-orange-600 text-white shadow-lg scale-110"
+                  : canAccessStep(s.id)
+                    ? "border-emerald-500 text-emerald-500 bg-emerald-500/5"
+                    : "border-gray-200 dark:border-gray-800 text-gray-400 opacity-40"
+              }`}>
+              0{s.id}
+            </button>
+            <span
+              className={`text-[10px] font-black uppercase italic tracking-tighter hidden sm:block ${activeStep === s.id ? "text-orange-600" : "text-gray-400"}`}>
+              {s.lab}
+            </span>
+            {s.id < 3 && (
+              <div className="w-6 h-px bg-gray-200 dark:bg-gray-800" />
             )}
           </div>
-        </div>
-      )}
+        ))}
+      </div>
 
-      {/* Step 1: Width Selection */}
-      {activeStep === 1 && (
-        <div>
-          <h3 className="text-xl font-semibold text-gray-700 text-center mb-6">
-            Select {productType === "tire" ? "Tire" : "Wheel"} Width
+      {/* 🛠️ Modern Grid Selector Area */}
+      <div className="bg-gray-50/50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 rounded-[40px] p-6 sm:p-10 text-center min-h-[400px]">
+        {/* Dynamic Header */}
+        <div className="mb-10">
+          <h3 className="text-2xl sm:text-4xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter">
+            Identify{" "}
+            {activeStep === 1
+              ? "Width"
+              : activeStep === 2
+                ? "Aspect Ratio"
+                : "Diameter"}
           </h3>
+          <p className="text-[10px] font-bold text-orange-600 uppercase tracking-[0.3em] mt-2 italic">
+            Configuring {productType.toUpperCase()} Spec
+          </p>
+        </div>
 
-          {isWidthLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : isWidthError ? (
-            <div className="text-center py-8">
-              <p className="text-red-500 mb-4">Failed to load width options</p>
-              <Button color="primary" onPress={() => window.location.reload()}>
-                Retry
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader2
+              className="animate-spin text-orange-600"
+              size={40}
+            />
+            <span className="text-[10px] font-black uppercase italic text-gray-400 tracking-widest">
+              Scanning Signal...
+            </span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 animate-in zoom-in-95 duration-300">
+            {(activeStep === 1
+              ? showAllWidths
+                ? widthOptions
+                : widthOptions.slice(0, 18)
+              : activeStep === 2
+                ? ratioOptions
+                : diameterOptions
+            ).map((opt: any) => {
+              const val =
+                activeStep === 1
+                  ? opt.width
+                  : activeStep === 2
+                    ? opt.ratio
+                    : opt.diameter;
+              const isSelected =
+                selectedSize?.[
+                  activeStep === 1
+                    ? "width"
+                    : activeStep === 2
+                      ? "ratio"
+                      : "diameter"
+                ]?._id === opt._id;
+
+              return (
+                <button
+                  key={opt._id}
+                  onClick={() =>
+                    activeStep === 1
+                      ? handleWidthSelect(opt)
+                      : activeStep === 2
+                        ? handleRatioSelect(opt)
+                        : handleDiameterSelect(opt)
+                  }
+                  className={`h-14 rounded-2xl border-2 font-black uppercase italic text-xs transition-all duration-300 hover:scale-[1.05] active:scale-90 ${
+                    isSelected
+                      ? "border-orange-600 bg-orange-600 text-white shadow-xl shadow-orange-600/30"
+                      : "border-gray-100 dark:border-gray-800 bg-white dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:border-orange-500/50 shadow-sm"
+                  }`}>
+                  {val}
+                  {activeStep === 3 ||
+                  (activeStep === 1 && productType === "wheel")
+                    ? '"'
+                    : ""}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* View All Widths Option */}
+        {activeStep === 1 && widthOptions.length > 18 && !showAllWidths && (
+          <button
+            onClick={() => setShowAllWidths(true)}
+            className="mt-8 text-[10px] font-black text-gray-400 hover:text-orange-600 uppercase italic tracking-widest transition-colors underline underline-offset-4">
+            + Expand Full Catalog
+          </button>
+        )}
+
+        {/* 🚀 Final Action Button */}
+        {selectedSize?.width &&
+          selectedSize?.ratio &&
+          selectedSize?.diameter && (
+            <div className="mt-12 animate-in slide-in-from-bottom-6 duration-500">
+              <Button
+                onPress={() => setMainStep(3)}
+                className="h-16 px-12 bg-gradient-to-r from-orange-600 to-rose-700 text-white text-sm font-black uppercase italic tracking-[0.2em] rounded-2xl shadow-2xl shadow-orange-600/30 active:scale-95 transition-all">
+                Explore {productType} Catalog <ArrowRight className="ml-2" />
               </Button>
             </div>
-          ) : widthOptions.length > 0 ? (
-            <>
-              <div className="grid grid-cols-6 gap-3 mb-6">
-                {displayedWidths.map((width: any) => (
-                  <Button
-                    key={width._id}
-                    variant="bordered"
-                    className={`h-12 ${
-                      selectedWidth?._id === width?._id
-                        ? "border-orange-500 bg-orange-50 text-orange-600"
-                        : "border-gray-300 hover:border-gray-400 text-gray-700"
-                    }`}
-                    onPress={() => handleWidthSelect(width)}
-                  >
-                    {width?.width}
-                    {productType === "wheel" && '"'}
-                  </Button>
-                ))}
-              </div>
-              {widthOptions.length > 18 && !showAllWidths && (
-                <div className="text-center">
-                  <Button
-                    variant="ghost"
-                    className="text-blue-600"
-                    onPress={() => setShowAllWidths(true)}
-                  >
-                    + see all
-                  </Button>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="text-center py-8 text-gray-700">
-              No width options available
-            </div>
           )}
+      </div>
+
+      {/* 🏁 Footer Guidelines */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 opacity-60">
+        <div className="flex items-center gap-2 text-[9px] font-black uppercase italic tracking-widest dark:text-gray-400 text-gray-500">
+          <Activity
+            size={14}
+            className="text-orange-600"
+          />
+          Precise Measurement Required for Safety
         </div>
-      )}
-
-      {/* Step 2: Ratio Selection */}
-      {activeStep === 2 && (
-        <div>
-          <h3 className="text-xl text-gray-700 font-semibold text-center mb-6">
-            Select {productType === "tire" ? "Aspect Ratio" : "Wheel Ratio"}
-          </h3>
-
-          {isRatioLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : isRatioError ? (
-            <div className="text-center py-8">
-              <p className="text-red-500 mb-4">Failed to load ratio options</p>
-              <Button color="primary" onPress={() => window.location.reload()}>
-                Retry
-              </Button>
-            </div>
-          ) : ratioOptions.length > 0 ? (
-            <div className="grid grid-cols-6 gap-3 mb-6">
-              {ratioOptions.map((ratio: any) => (
-                <Button
-                  key={ratio?._id}
-                  variant="bordered"
-                  className={`h-12 ${
-                    selectedRatio?._id === ratio?._id
-                      ? "border-orange-500 bg-orange-50 text-orange-600"
-                      : "border-gray-300 hover:border-gray-400 text-gray-700"
-                  }`}
-                  onPress={() => handleRatioSelect(ratio)}
-                >
-                  {ratio?.ratio}
-                </Button>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-700">
-              No ratio options available for the selected width
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Step 3: Diameter Selection */}
-      {activeStep === 3 && (
-        <div>
-          <h3 className="text-xl font-semibold text-gray-700 text-center mb-6">
-            Select Rim Diameter
-          </h3>
-
-          {isDiameterLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : isDiameterError ? (
-            <div className="text-center py-8">
-              <p className="text-red-500 mb-4">
-                Failed to load diameter options
-              </p>
-              <Button color="primary" onPress={() => window.location.reload()}>
-                Retry
-              </Button>
-            </div>
-          ) : diameterOptions.length > 0 ? (
-            <div className="grid grid-cols-6 gap-3 mb-6">
-              {diameterOptions.map((diameter: any) => (
-                <Button
-                  key={diameter?._id}
-                  variant="bordered"
-                  className={`h-12 ${
-                    selectedDiameter?._id === diameter?._id
-                      ? "border-orange-500 bg-orange-50 text-orange-600"
-                      : "border-gray-300 hover:border-gray-400 text-gray-700"
-                  }`}
-                  onPress={() => handleDiameterSelect(diameter)}
-                >
-                  {diameter?.diameter}"
-                </Button>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-700">
-              No diameter options available for the selected width and ratio
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* View Products Button */}
-      {canProceed && (
-        <div className="text-center mt-8">
-          <Button
-            color="primary"
-            size="lg"
-            className="px-12 py-3 bg-red-400 hover:bg-red-500"
-            onPress={handleViewProducts}
-          >
-            VIEW {productType.toUpperCase()}
-          </Button>
-        </div>
-      )}
+        <Link
+          href="/contact"
+          className="flex items-center gap-2 text-[9px] font-black uppercase italic tracking-widest text-orange-600 hover:underline">
+          <HelpCircle size={14} /> Need Technical Assistance?
+        </Link>
+      </div>
     </div>
   );
 };

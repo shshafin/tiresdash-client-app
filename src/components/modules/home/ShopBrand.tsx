@@ -5,174 +5,126 @@ import { useGetBrands } from "@/src/hooks/brand.hook";
 import Image from "next/image";
 import Link from "next/link";
 import { Skeleton } from "@heroui/skeleton";
-import { ChevronRight, Star, Shield } from "lucide-react";
+import { ChevronRight, Zap, BadgeCheck } from "lucide-react";
 
 const ShopByBrandSection = () => {
-  const { data: brands, isError, isLoading } = useGetBrands({ limit: 12 });
+  const { data: brands, isLoading } = useGetBrands({ limit: 12 });
 
-  // Render skeleton loading UI
   if (isLoading) {
     return (
-      <section className="py-7 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-black dark:via-black dark:to-black overflow-hidden">
-        <div className="max-w-7xl mx-auto">
-          {/* Section Heading Skeleton */}
-          <div className="text-center mb-16">
-            <Skeleton className="h-6 w-56 mx-auto mb-4 rounded-full" />
-            <Skeleton className="h-14 w-4/5 mx-auto mb-6 rounded-lg" />
-            <Skeleton className="h-6 w-3/4 mx-auto mb-2 rounded-full" />
-            <Skeleton className="h-6 w-2/3 mx-auto rounded-full" />
-          </div>
-
-          {/* Brand Logos Skeleton */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8">
-            {Array.from({ length: 12 }).map((_, index) => (
-              <div
-                key={index}
-                className="group bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <Skeleton className="w-20 h-20 mx-auto rounded-xl mb-4" />
-                <Skeleton className="h-4 w-16 mx-auto rounded-full" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  // Error state
-  if (isError) {
-    return (
-      <section className="py-7 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-black dark:via-black dark:to-black overflow-hidden">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-12">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Shield className="w-8 h-8 text-red-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-red-900 mb-4">
-              Oops! Something went wrong
-            </h2>
-            <p className="text-red-700 text-lg">
-              We're having trouble loading our tire brands. Please refresh the
-              page or try again later.
-            </p>
-          </div>
+      <section className="py-12 px-4 bg-white dark:bg-black">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-6 gap-4">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <Skeleton
+              key={i}
+              className="h-32 sm:h-44 rounded-2xl sm:rounded-[40px] bg-gray-100 dark:bg-white/5"
+            />
+          ))}
         </div>
       </section>
     );
   }
 
   return (
-    <section className="py-7 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-black dark:via-black dark:to-black relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(120,119,198,0.05),transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,rgba(255,20,29,0.03),transparent_50%)]" />
+    <section className="py-12 sm:py-24 px-4 relative overflow-hidden bg-white dark:bg-[#050505]">
+      {/* 🏁 Background Element */}
+      <div className="absolute inset-0 pointer-events-none opacity-20">
+        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+      </div>
 
-      <div className="max-w-7xl mx-auto relative">
-        {/* Section Heading */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-2 rounded-full text-sm font-semibold mb-6 shadow-lg shadow-red-500/20">
-            <Star className="w-4 h-4 fill-current" />
-            <span className="uppercase tracking-wider">
-              Premium Tire Brands
+      <div className="max-w-7xl mx-auto relative z-10">
+        {/* 🏎️ Marketing Header: Responsive Text Sizes */}
+        <div className="mb-10 sm:mb-20 text-center">
+          <div className="inline-flex items-center gap-2 bg-gray-900 text-white px-4 py-1.5 sm:px-5 sm:py-2 transform -skew-x-12 mb-4 sm:mb-6 shadow-xl border-l-4 border-orange-600">
+            <BadgeCheck
+              size={14}
+              className="text-orange-500 sm:w-4 sm:h-4"
+            />
+            <span className="font-black uppercase italic text-[8px] sm:text-[10px] tracking-[0.2em]">
+              Authorized Dealer
             </span>
           </div>
 
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-gray-200 mb-6 leading-tight">
-            Choose Your Perfect
-            <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 bg-clip-text text-transparent block sm:inline sm:ml-4">
-              Tire Brand
-            </span>
+          <h2 className="text-3xl sm:text-5xl md:text-7xl font-black uppercase italic tracking-tighter dark:text-white leading-none mb-4 sm:mb-6">
+            SHOP BY <span className="text-orange-600">PREMIUM BRANDS</span>
           </h2>
 
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Discover premium tire brands trusted by millions of drivers
-            worldwide.
-            <span className="font-semibold text-gray-800 dark:text-gray-400 block mt-2">
-              Quality, performance, and safety – all in one place.
+          <p className="text-[10px] sm:text-base font-bold uppercase italic text-gray-500 tracking-wide max-w-2xl mx-auto leading-relaxed px-2">
+            World&apos;s most trusted manufacturers.{" "}
+            <br className="hidden sm:block" />
+            <span className="text-gray-900 dark:text-gray-300">
+              Performance & Safety – Guaranteed.
             </span>
           </p>
         </div>
 
-        {/* Brand Logos Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 lg:gap-8">
-          {brands?.data?.map((brand: any, index: number) => (
+        {/* 🛠️ Brand Grid: Compact on Mobile */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-6">
+          {brands?.data?.map((brand: any) => (
             <Link
-              key={brand.id}
+              key={brand._id}
               href={`/tire?brand=${encodeURIComponent(brand._id)}`}
-              className="group block">
-              <div
-                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:border-gray-200 transition-all duration-500 hover:shadow-xl hover:shadow-gray-200/50 hover:-translate-y-2 relative overflow-hidden"
-                style={{
-                  animationDelay: `${index * 100}ms`,
-                }}>
-                {/* Hover Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              className="group perspective-1000">
+              <div className="relative h-32 sm:h-48 flex flex-col items-center justify-center bg-gray-50 dark:bg-[#0f1115] rounded-2xl sm:rounded-[40px] border border-transparent transition-all duration-500 hover:border-orange-600 hover:shadow-[0_20px_40px_rgba(234,88,12,0.15)] group-hover:-translate-y-2 overflow-hidden">
+                {/* 🖼️ Logo: Size Optimized */}
+                <div className="relative z-10 w-16 h-16 sm:w-24 sm:h-24 mb-1 sm:mb-2 transition-all duration-500 group-hover:scale-110">
+                  <div className="absolute inset-0 bg-white dark:bg-white/5 rounded-full blur-xl opacity-40" />
+                  <Image
+                    src={`${envConfig.base_url}${brand.logo}`}
+                    alt={brand.name}
+                    fill
+                    className="object-contain p-3 sm:p-4 z-20 drop-shadow-lg"
+                  />
+                </div>
 
-                {/* Brand Logo */}
-                <div className="relative z-10">
-                  {brand.logo ? (
-                    <div className="w-20 h-20 mx-auto mb-4 relative">
-                      <div className="w-full h-full rounded-xl bg-gray-50 group-hover:bg-white transition-colors duration-300 flex items-center justify-center overflow-hidden">
-                        <Image
-                          src={`${envConfig.base_url}${brand.logo}`}
-                          alt={brand.name}
-                          width={80}
-                          height={80}
-                          className="w-16 h-16 object-contain group-hover:scale-110 transition-transform duration-500"
-                        />
-                      </div>
-
-                      {/* Premium Badge */}
-                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg">
-                        <Star className="w-3 h-3 text-white fill-current" />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="w-20 h-20 mx-auto mb-4 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center group-hover:from-gray-50 group-hover:to-gray-100 transition-all duration-300">
-                      <span className="text-sm text-gray-700 font-semibold text-center px-2">
-                        {brand.name}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Brand Name */}
-                  <div className="text-center">
-                    <h3 className="font-semibold text-gray-800 text-sm mb-1 group-hover:text-red-600 transition-colors duration-300">
-                      {brand.name}
-                    </h3>
-
-                    {/* Explore Text */}
-                    <div className="flex items-center justify-center gap-1 text-xs text-gray-500 group-hover:text-red-500 transition-colors duration-300 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0">
-                      <span>Explore</span>
-                      <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-300" />
-                    </div>
+                {/* 📄 Brand Label: Mobile-Specific Text */}
+                <div className="relative z-10 text-center px-2">
+                  <h3 className="font-black text-[9px] sm:text-xs uppercase italic tracking-tighter dark:text-gray-200 text-gray-900 group-hover:text-orange-600 transition-colors">
+                    {brand.name}
+                  </h3>
+                  <div className="hidden sm:flex items-center justify-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-all text-orange-600">
+                    <span className="text-[8px] font-black uppercase tracking-tighter">
+                      Collection
+                    </span>
+                    <ChevronRight size={8} />
                   </div>
                 </div>
 
-                {/* Bottom Accent Line */}
-                <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+                {/* Shimmer Effect */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-1000">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-[1200ms]" />
+                </div>
               </div>
             </Link>
           ))}
         </div>
 
-        {/* Call to Action */}
-        <div className="text-center mt-16">
-          <div className="inline-flex flex-col sm:flex-row items-center gap-4 bg-white rounded-2xl p-8 shadow-xl border border-gray-100">
-            <div className="flex-1 text-left">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Can't find your preferred brand?
-              </h3>
-              <p className="text-gray-600">
-                Contact our tire experts for personalized recommendations
-              </p>
+        {/* 🚀 Marketing CTA Section: Responsive Padding & Text */}
+        <div className="mt-12 sm:mt-24">
+          <div className="relative bg-gray-900 dark:bg-[#0f1115] rounded-[32px] sm:rounded-[48px] p-6 sm:p-16 overflow-hidden border border-orange-600/20">
+            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-10">
+              <div className="text-center lg:text-left">
+                <h3 className="text-2xl sm:text-5xl font-black uppercase italic tracking-tighter text-white mb-2 sm:mb-4">
+                  MISSING A <span className="text-orange-600">BRAND?</span>
+                </h3>
+                <p className="text-gray-400 font-bold uppercase italic text-[8px] sm:text-[11px] tracking-widest max-w-sm sm:max-w-lg">
+                  Access to 100+ manufacturers. Custom orders available via pit
+                  crew support.
+                </p>
+              </div>
+
+              <Link
+                href="/contact"
+                className="w-full lg:w-auto">
+                <button className="w-full bg-orange-600 text-white px-6 py-4 sm:px-12 sm:py-6 rounded-xl sm:rounded-2xl font-black uppercase italic tracking-[0.15em] sm:tracking-[0.2em] text-[10px] sm:text-sm flex items-center justify-center gap-2 sm:gap-4 hover:bg-white hover:text-black transition-all duration-500 shadow-xl active:scale-95">
+                  <span>Contact Expert</span>{" "}
+                  <ChevronRight
+                    size={16}
+                    className="sm:w-5 sm:h-5"
+                  />
+                </button>
+              </Link>
             </div>
-            <a href="/contact">
-              <button className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-red-500/25 hover:-translate-y-1 flex items-center gap-2">
-                <span>Contact Expert</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </a>
           </div>
         </div>
       </div>

@@ -21,9 +21,10 @@ import {
   PlusCircle,
   ShieldCheck,
   CheckCircle2,
+  Tags,
 } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@heroui/spinner";
@@ -66,8 +67,18 @@ const CartPage = () => {
   const [selectedServices, setSelectedServices] = useState<SelectedServices>(
     {}
   );
-  const [calculatedTotal, setCalculatedTotal] = useState(0);
   const [activeUpdateId, setActiveUpdateId] = useState<string | null>(null);
+
+  // ✅ ১. রিয়েল-টাইম গ্র্যান্ড টোটাল ক্যালকুলেশন (যা সামারির সাথে ১০০% মিলবে)
+  const finalCalculatedTotal = useMemo(() => {
+    return cartItems.reduce((total: number, item: CartItem) => {
+      const productSubtotal = item.price * item.quantity;
+      const installationSubtotal = (item.installationFee || 0) * item.quantity;
+      const addonSubtotal = (item.addonPrice || 0) * item.quantity;
+
+      return total + productSubtotal + installationSubtotal + addonSubtotal;
+    }, 0);
+  }, [cartItems]);
 
   const { mutate: updateServices } = useUpdateCartItemServices({
     userId: user?._id,
@@ -139,23 +150,6 @@ const CartPage = () => {
     }
   }, [cartItems]);
 
-  useEffect(() => {
-    let total = 0;
-    cartItems.forEach((item: CartItem) => {
-      total += item.price * item.quantity;
-      const selections = selectedServices[item.product];
-      if (selections?.installation) {
-        total += (item.productDetails?.installationPrice || 0) * item.quantity;
-      }
-      selections?.addonServices?.forEach((idx) => {
-        const price =
-          item.productDetails?.addonServices?.[parseInt(idx)]?.price || 0;
-        total += price * item.quantity;
-      });
-    });
-    setCalculatedTotal(total || totalPrice);
-  }, [cartItems, selectedServices, totalPrice]);
-
   if (isLoading)
     return (
       <div className="flex h-[70vh] items-center justify-center">
@@ -206,7 +200,6 @@ const CartPage = () => {
       </div>
 
       <div className="grid gap-12 lg:grid-cols-12 items-start">
-        {/* Left Side: Items */}
         <div className="lg:col-span-8 space-y-8">
           {cartItems.map((item: CartItem, idx: number) => (
             <div
@@ -223,9 +216,29 @@ const CartPage = () => {
 
               <div className="flex-grow space-y-6">
                 <div className="flex justify-between items-start">
-                  <h3 className="font-black text-2xl text-gray-800 uppercase leading-none tracking-tight">
-                    {item.name}
-                  </h3>
+                  <div>
+                    <h3 className="font-black text-2xl text-gray-800 uppercase leading-none tracking-tight">
+                      {item.name}
+                    </h3>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded">
+                        Unit: ${item.price.toFixed(2)}
+                      </span>
+                      {item.quantity >= 4 &&
+                        item.productDetails?.fourSetDiscountPrice && (
+                          <span className="bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase flex items-center gap-1">
+                            <Tags size={10} /> 4-Set Offer Active
+                          </span>
+                        )}
+                      {item.quantity >= 2 &&
+                        item.quantity < 4 &&
+                        item.productDetails?.twoSetDiscountPrice && (
+                          <span className="bg-orange-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase flex items-center gap-1">
+                            <Tags size={10} /> 2-Set Offer Active
+                          </span>
+                        )}
+                    </div>
+                  </div>
                   <button
                     onClick={() =>
                       handleRemoveItemFromCart({
@@ -238,8 +251,8 @@ const CartPage = () => {
                   </button>
                 </div>
 
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-4 bg-gray-50 px-4 py-2 rounded-2xl border border-gray-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                  <div className="flex items-center gap-4 bg-gray-50 px-4 py-2 rounded-2xl border border-gray-100 w-fit">
                     <button
                       className="disabled:opacity-20"
                       onClick={() => {
@@ -282,6 +295,40 @@ const CartPage = () => {
                       <Plus size={16} />
                     </button>
                   </div>
+
+                  <div className="flex items-center gap-2">
+                    {item.productDetails?.twoSetDiscountPrice &&
+                      item.quantity !== 2 && (
+                        <button
+                          onClick={() => {
+                            setActiveUpdateId(item.product);
+                            handleUpdateCartItem({
+                              productId: item.product,
+                              productType: item.productType,
+                              quantity: 2,
+                            });
+                          }}
+                          className="text-[9px] font-black border-2 border-orange-100 text-orange-500 px-3 py-1.5 rounded-xl hover:bg-orange-50 transition-colors uppercase">
+                          Get Pair (2)
+                        </button>
+                      )}
+                    {item.productDetails?.fourSetDiscountPrice &&
+                      item.quantity !== 4 && (
+                        <button
+                          onClick={() => {
+                            setActiveUpdateId(item.product);
+                            handleUpdateCartItem({
+                              productId: item.product,
+                              productType: item.productType,
+                              quantity: 4,
+                            });
+                          }}
+                          className="text-[9px] font-black border-2 border-emerald-100 text-emerald-500 px-3 py-1.5 rounded-xl hover:bg-emerald-50 transition-colors uppercase">
+                          Get Set (4)
+                        </button>
+                      )}
+                  </div>
+
                   <p className="text-2xl font-black tracking-tighter">
                     ${(item.price * item.quantity).toFixed(2)}
                   </p>
@@ -380,7 +427,6 @@ const CartPage = () => {
           ))}
         </div>
 
-        {/* Right Side: Refreshing & Joyful Summary */}
         <div className="lg:col-span-4">
           <Card className="p-8 border-none shadow-2xl shadow-gray-200 bg-white rounded-[40px] sticky top-10">
             <CardHeader className="p-0 mb-8 flex flex-col items-center text-center">
@@ -404,7 +450,6 @@ const CartPage = () => {
                   </span>
                 </div>
 
-                {/* Service Breakdown */}
                 <div className="flex justify-between text-gray-400 text-sm font-bold uppercase tracking-tight">
                   <span>Expert Fitment</span>
                   <span className="text-secondary">
@@ -440,7 +485,7 @@ const CartPage = () => {
                     Total Amount Due
                   </span>
                   <span className="text-6xl font-black text-gray-900 tracking-tighter">
-                    ${calculatedTotal.toFixed(2)}
+                    ${finalCalculatedTotal.toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -472,7 +517,9 @@ const CartPage = () => {
             <CardFooter className="p-0 mt-4">
               <button
                 onClick={() =>
-                  router.push(`/checkout?total=${calculatedTotal.toFixed(2)}`)
+                  router.push(
+                    `/checkout?total=${finalCalculatedTotal.toFixed(2)}`
+                  )
                 }
                 className="group relative w-full h-20 bg-gradient-to-r from-rose-500 via-pink-600 to-rose-500 bg-[length:200%_auto] hover:bg-right transition-all duration-500 rounded-3xl flex items-center justify-center gap-4 text-white font-black uppercase tracking-widest shadow-[0_20px_40px_-15px_rgba(225,29,72,0.4)] active:scale-95">
                 <span>Proceed to Checkout</span>

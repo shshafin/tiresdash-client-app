@@ -5,273 +5,262 @@ import {
   Navbar as HeroUINavbar,
   NavbarContent,
   NavbarMenu,
-  NavbarMenuToggle,
   NavbarBrand,
-  NavbarItem,
-  NavbarMenuItem,
 } from "@heroui/navbar";
-
-import { Link } from "@heroui/link";
-import { link as linkStyles } from "@heroui/theme";
 import NextLink from "next/link";
-import clsx from "clsx";
-
-import { siteConfig } from "@/src/config/site";
 import { ThemeSwitch } from "@/src/components/UI/theme-switch";
 import { Logo } from "@/src/components/icons";
 import { NavbarLogin, NavbarLoginMobile } from "./NavbarLogin";
-import { Car, Heart, Phone, Search, ShoppingCart } from "lucide-react";
+import {
+  Car,
+  Phone,
+  ShoppingCart,
+  ShieldCheck,
+  Zap,
+  SunMoon,
+  ChevronRight,
+  Menu,
+  X,
+} from "lucide-react";
 import Image from "next/image";
 import { VehicleModal } from "./my-vehicles-modal";
 import DesktopNavItems from "./desktop-nav-items";
 import MobileNavItems from "./mobile-nav-items";
+import clsx from "clsx";
 
 export const Navbar = () => {
   const [isVehicleModalOpen, setIsVehicleModalOpen] = useState(false);
-  const [vehicleCount, setVehicleCount] = useState(0);
-
-  // Add a state to track user vehicles and the latest model
-  const [userVehicles, setUserVehicles] = useState<any[]>([]);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [latestModel, setLatestModel] = useState<string>("");
 
   const handleOpenVehicleModal = () => {
+    setIsMenuOpen(false);
     setIsVehicleModalOpen(true);
   };
 
-  const handleCloseVehicleModal = () => {
-    setIsVehicleModalOpen(false);
-    // Update vehicle data when modal closes
-    loadVehicles();
-  };
-
-  // Function to load vehicles and update state
   const loadVehicles = () => {
     try {
       if (typeof window !== "undefined") {
         const savedVehicles = localStorage.getItem("userVehicles");
-
         if (savedVehicles) {
-          const parsedVehicles = JSON.parse(savedVehicles);
-          const vehicles = Array.isArray(parsedVehicles)
-            ? parsedVehicles
-            : [parsedVehicles];
-
-          setUserVehicles(vehicles);
-          setVehicleCount(vehicles.length);
-
-          // Get the latest vehicle's model (last item in the array)
-          if (vehicles.length > 0) {
-            const latestVehicle = vehicles[vehicles.length - 1];
-            if (latestVehicle.model) {
-              setLatestModel(latestVehicle.model);
-            } else {
-              setLatestModel("");
-            }
-          } else {
-            setLatestModel("");
-          }
-        } else {
-          // Reset all states if no vehicles in localStorage
-          setUserVehicles([]);
-          setVehicleCount(0);
-          setLatestModel("");
+          const list = JSON.parse(savedVehicles);
+          const vehicles = Array.isArray(list) ? list : [list];
+          if (vehicles.length > 0)
+            setLatestModel(vehicles[vehicles.length - 1].model || "");
         }
       }
     } catch (err) {
-      console.error("Error loading vehicles:", err);
-      setUserVehicles([]);
-      setVehicleCount(0);
       setLatestModel("");
     }
   };
 
-  // Load vehicles on initial render and set up event listeners
   useEffect(() => {
-    // Initial load
     loadVehicles();
-
-    // Set up event listeners for changes
-    const handleStorageChange = () => {
-      loadVehicles();
-    };
-
-    // Listen for both storage events and our custom vehiclesUpdated event
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("vehiclesUpdated", handleStorageChange);
-
+    window.addEventListener("storage", loadVehicles);
+    window.addEventListener("vehiclesUpdated", loadVehicles);
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("vehiclesUpdated", handleStorageChange);
+      window.removeEventListener("storage", loadVehicles);
+      window.removeEventListener("vehiclesUpdated", loadVehicles);
     };
   }, []);
 
   return (
     <>
       <HeroUINavbar
-        maxWidth="2xl"
+        maxWidth="full"
         position="sticky"
-        height={150}>
-        {/* Main navbar layout */}
-        <div className="hidden md:flex items-center justify-between w-full px-4">
-          {/* Left: Logo */}
-          <div className="flex items-center justify-start">
-            <NavbarBrand
-              as="li"
-              className="gap-2 max-w-fit">
-              <NextLink
-                href="/"
-                className="flex items-center gap-1">
-                <Logo />
-              </NextLink>
-            </NavbarBrand>
-          </div>
+        className="bg-white/90 dark:bg-[#0f1115]/90 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 h-auto py-4"
+        isMenuOpen={isMenuOpen}
+        onMenuOpenChange={setIsMenuOpen}>
+        {/* --- DESKTOP & TABLET CONTAINER --- */}
+        <div className="hidden md:flex items-center justify-between w-full px-6 gap-4">
+          <NavbarBrand
+            as="li"
+            className="max-w-fit shrink-0">
+            <NextLink
+              href="/"
+              className="hover:scale-105 transition-all">
+              <Logo />
+            </NextLink>
+          </NavbarBrand>
 
-          {/* Middle: Need Help Button + Nav Items */}
-          <div className="hidden md:flex justify-center flex-grow flex-col gap-2">
-            <div className="flex justify-center items-center gap-3 md:gap-2">
-              {/* Need Help Button */}
+          {/* ✅ মাঝখানের পার্ট: বড় স্ক্রিনে মেনু দেখাবে, ১৩৫০px এর নিচে শুধু সাপোর্ট বার */}
+          <div className="flex flex-col items-center gap-3 flex-1">
+            <div className="flex items-center gap-6">
               <NextLink
                 href="/contact"
-                className={linkStyles()}>
-                {" "}
-                <button className="px-3 py-1 bg-gradient-to-r from-gray-100 to-gray-300 text-gray-700 rounded-md flex items-center space-x-2 shadow-md hover:shadow-lg transition-shadow duration-300 text-sm md:text-xs">
-                  <Phone className="h-4 w-4" />
-                  <span>Need Help?</span>
-                </button>
+                className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-orange-500 transition-colors italic shrink-0">
+                <Phone
+                  size={12}
+                  className="text-orange-500"
+                />{" "}
+                Live Support
               </NextLink>
-
-              <ThemeSwitch className="hidden sm:block" />
+              <div className="h-3 w-[1px] bg-gray-200 dark:bg-gray-800" />
+              <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 italic shrink-0">
+                <ShieldCheck
+                  size={12}
+                  className="text-orange-500"
+                />{" "}
+                Track Ready
+              </div>
             </div>
 
-            <div className="border-t border-gray-500 my-2 w-3/4 mx-auto" />
-
-            <DesktopNavItems />
+            {/* ১৩৫০px এর বেশি হলে ডেস্কটপ মেনু দেখাবে, কম হলে হাইড হয়ে ড্রয়ারে চলে যাবে */}
+            <div className="hidden min-[1350px]:block">
+              <DesktopNavItems />
+            </div>
           </div>
 
-          {/* Right: Login, My Vehicles, Cart, and Search */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex gap-2 items-center">
-              <NavbarLogin />
-              <div
-                className="flex items-center gap-2 border-x border-gray-500 px-2 cursor-pointer hover:text-primary transition-colors relative"
-                onClick={handleOpenVehicleModal}>
-                <Car size={16} />
-                <span className="text-sm md:text-xs md:hidden lg:flex">
-                  {latestModel || "My Vehicles"}
-                </span>
-              </div>
-              <div
-                title="Wishlist"
-                className="flex items-center gap-2 border-r pr-2 border-gray-500">
-                <Link href="/wishlist">
-                  <Heart
-                    size={16}
-                    className="text-orange-600"
-                  />
-                </Link>
-              </div>
-              <div
-                title="Cart"
-                className="flex items-center gap-2">
-                <Link href="/cart">
-                  <ShoppingCart
-                    size={16}
-                    className="text-orange-600"
-                  />
-                </Link>
-              </div>
-            </div>
+          <div className="flex items-center gap-3 shrink-0">
+            {/* ✅ "RACE MENU" Button for 768px to 1350px */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="min-[1350px]:hidden flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-xl font-black uppercase text-[10px] italic shadow-lg hover:bg-orange-700 transition-all">
+              {isMenuOpen ? <X size={18} /> : <Menu size={18} />}
+              <span>Menu</span>
+            </button>
 
-            {/* <div className="border-t border-gray-500 w-full" /> */}
+            <ThemeSwitch />
+            <NavbarLogin />
+            <div className="h-6 w-[1px] bg-gray-200 dark:bg-gray-800" />
 
-            {/* <div className="flex items-center gap-3 md:gap-2">
-              <span className="text-sm md:text-xs md:hidden lg:flex">
-                What can we help you find?
+            <button
+              onClick={handleOpenVehicleModal}
+              className="hidden lg:flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-orange-500 transition-all">
+              <Car
+                size={16}
+                className="text-orange-600"
+              />
+              <span className="text-[10px] font-black uppercase italic">
+                {latestModel || "My Garage"}
               </span>
-              <Search size={16} />
-            </div> */}
+            </button>
+
+            <NextLink
+              href="/cart"
+              className="group relative p-3 bg-gray-900 dark:bg-orange-600 text-white rounded-2xl shadow-xl hover:shadow-orange-500/40 transition-all overflow-hidden">
+              <ShoppingCart
+                size={22}
+                className="group-hover:rotate-[-12deg] transition-transform"
+              />
+              <Zap
+                size={10}
+                className="absolute top-1 right-1 text-yellow-400 fill-yellow-400 animate-pulse"
+              />
+            </NextLink>
           </div>
         </div>
 
-        {/* Mobile nav */}
-        <NavbarContent className="md:hidden px-4">
-          <div className="w-full flex justify-between items-center">
-            <NavbarBrand
-              as="li"
-              className="gap-3 max-w-fit">
-              <NextLink
-                href="/"
-                className="flex items-center gap-1">
-                <Image
-                  src={"/logo.png"}
-                  height={80}
-                  width={80}
-                  alt="logo"
+        {/* --- MOBILE NAVBAR (<768px) --- */}
+        <NavbarContent
+          className="md:hidden w-full h-16 px-4"
+          justify="start">
+          <NavbarBrand>
+            <NextLink
+              href="/"
+              onClick={() => setIsMenuOpen(false)}>
+              <Image
+                src="/logo.png"
+                height={45}
+                width={45}
+                alt="logo"
+                className="object-contain"
+              />
+            </NextLink>
+          </NavbarBrand>
+
+          <div className="flex items-center gap-3">
+            <NextLink
+              href="/cart"
+              onClick={() => setIsMenuOpen(false)}
+              className="relative p-2.5 bg-orange-600 rounded-xl text-white">
+              <ShoppingCart size={20} />
+              <Zap
+                size={8}
+                className="absolute -top-1 -right-1 text-yellow-400 fill-yellow-400 animate-pulse"
+              />
+            </NextLink>
+            <NavbarLoginMobile />
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className={clsx(
+                "w-11 h-11 rounded-xl flex flex-col justify-center items-center transition-all border",
+                isMenuOpen
+                  ? "bg-orange-600 border-orange-500"
+                  : "bg-gray-900 border-gray-800"
+              )}>
+              <div className="flex flex-col gap-1">
+                <span
+                  className={clsx(
+                    "h-0.5 w-5 bg-white transition-all",
+                    isMenuOpen ? "rotate-45 translate-y-1.5" : ""
+                  )}
                 />
-              </NextLink>
-            </NavbarBrand>
-            <div className="flex items-center gap-2">
-              <ThemeSwitch />
-              <NavbarLoginMobile />
-              <NavbarMenuToggle />
-            </div>
+                <span
+                  className={clsx(
+                    "h-0.5 w-3 bg-white self-end transition-all",
+                    isMenuOpen ? "opacity-0" : ""
+                  )}
+                />
+                <span
+                  className={clsx(
+                    "h-0.5 w-5 bg-white transition-all",
+                    isMenuOpen ? "-rotate-45 -translate-y-1.5" : ""
+                  )}
+                />
+              </div>
+            </button>
           </div>
         </NavbarContent>
 
-        {/* Mobile menu */}
-        <NavbarMenu>
-          <div className="mx-4 mt-2 flex flex-col gap-2">
-            {/* Need Help Button */}
-            <NextLink
-              href="/contact"
-              className={linkStyles()}>
-              <button className="px-3 py-2 bg-gradient-to-r from-gray-100 to-gray-300 text-gray-700 rounded-md flex items-center gap-2 shadow-sm text-sm">
-                <Phone className="h-5 w-5" />
-                <span>Need Help?</span>
+        {/* --- FULL MENU DRAWER (Mobile & Tablet) --- */}
+        <NavbarMenu className="bg-white dark:bg-[#0f1115] pt-8 px-4">
+          <div className="flex flex-col h-full">
+            <MobileNavItems closeMenu={() => setIsMenuOpen(false)} />
+            <div className="mt-auto pb-10 space-y-4">
+              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#1a1d23] rounded-2xl border">
+                <div className="flex items-center gap-3">
+                  <SunMoon
+                    className="text-orange-500"
+                    size={20}
+                  />
+                  <span className="text-xs font-black uppercase tracking-widest">
+                    Switch Theme
+                  </span>
+                </div>
+                <ThemeSwitch />
+              </div>
+
+              <button
+                onClick={handleOpenVehicleModal}
+                className="flex items-center justify-between w-full p-5 bg-gray-900 text-white rounded-2xl border border-gray-800 shadow-xl">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-orange-600 rounded-xl">
+                    <Car size={20} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest">
+                      Active Vehicle
+                    </p>
+                    <p className="text-sm font-black uppercase italic">
+                      {latestModel || "Setup Ride"}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight
+                  size={20}
+                  className="text-gray-600"
+                />
               </button>
-            </NextLink>
-
-            {/* Divider */}
-            <div className="border-t border-gray-500 my-2" />
-
-            <MobileNavItems />
-
-            {/* My Vehicles */}
-            <div
-              className="flex items-center mt-2 gap-2 px-2 cursor-pointer hover:text-primary transition-colors"
-              onClick={handleOpenVehicleModal}>
-              <Car size={16} />
-              <span className="text-sm">{latestModel || "My Vehicles"}</span>
             </div>
-
-            {/* Wishlist */}
-            <div className="flex items-center gap-2 px-2">
-              <Link href="/cart">
-                <Heart size={16} />
-              </Link>
-              <span className="text-sm">Wishlist</span>
-            </div>
-            {/* Cart */}
-            <div className="flex items-center gap-2 px-2">
-              <Link href="/cart">
-                <ShoppingCart size={16} />
-              </Link>
-              <span className="text-sm">Cart</span>
-            </div>
-
-            {/* Search */}
-            {/* <div className="flex items-center gap-2 px-2">
-              <Search size={16} />
-              <span className="text-sm">What can we help you find?</span>
-            </div> */}
           </div>
         </NavbarMenu>
       </HeroUINavbar>
 
-      {/* Vehicle Modal */}
       <VehicleModal
         isOpen={isVehicleModalOpen}
-        onClose={handleCloseVehicleModal}
+        onClose={() => setIsVehicleModalOpen(false)}
       />
     </>
   );

@@ -15,6 +15,9 @@ import {
   ArrowRight,
   Gift,
   Zap,
+  Layers,
+  Trophy,
+  Gauge,
 } from "lucide-react";
 import { envConfig } from "@/src/config/envConfig";
 
@@ -76,34 +79,98 @@ const DealsCarousel = ({ data }: { data: any[] }) => {
       </div>
     );
   }
-
   if (!hasDeals) {
     return (
-      <div className="relative py-16 px-4">
-        {/* ... Your "No Deals" JSX remains unchanged ... */}
-        <div className="relative z-10 max-w-4xl mx-auto text-center">
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-white/50 dark:border-gray-700/50 rounded-3xl p-12 shadow-2xl">
-            <div className="mb-6">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/50 dark:to-red-900/50 rounded-full mb-4">
-                <Gift className="w-10 h-10 text-orange-600 dark:text-orange-400" />
+      <div className="relative py-12 px-4 overflow-hidden min-h-[350px] flex items-center justify-center">
+        {/* 🏎️ Racing Background Elements */}
+        <div className="absolute inset-0 bg-white dark:bg-black opacity-30" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-orange-600/5 rounded-full blur-[100px] pointer-events-none" />
+
+        <div className="relative z-10 max-w-3xl w-full mx-auto group">
+          {/* 🏁 The Sporty Compact Card */}
+          <div className="relative bg-gradient-to-br from-orange-600 via-rose-600 to-red-700 rounded-[32px] p-8 sm:p-12 shadow-[0_30px_60px_-15px_rgba(234,88,12,0.3)] overflow-hidden border border-white/20 transition-transform duration-500 hover:scale-[1.01]">
+            {/* 🌊 Animated Watermarks (Floating Logic) */}
+            <div className="absolute -right-6 -bottom-6 opacity-5 text-white animate-pulse pointer-events-none">
+              <Zap
+                size={250}
+                className="animate-bounce"
+                style={{ animationDuration: "4s" }}
+              />
+            </div>
+            <div className="absolute -left-10 -top-10 opacity-5 text-white pointer-events-none animate-pulse">
+              <Layers
+                size={180}
+                className="animate-spin-slow"
+                style={{ animationDuration: "10s" }}
+              />
+            </div>
+
+            {/* Content Container */}
+            <div className="relative z-20 flex flex-col items-center text-center text-white">
+              {/* Compact Icon Section with Orbit Glow */}
+              <div className="relative mb-6">
+                <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl animate-pulse" />
+                <div className="relative size-16 sm:size-20 bg-white/20 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center shadow-xl">
+                  <Trophy className="size-8 sm:size-10 text-white drop-shadow-md animate-wiggle" />
+                </div>
+              </div>
+
+              {/* Text Highlights */}
+              <div className="inline-flex items-center gap-2 bg-black/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 mb-4 shadow-inner">
+                <div className="size-1.5 bg-yellow-400 rounded-full animate-ping" />
+                <span className="text-[9px] font-black uppercase italic tracking-[0.3em]">
+                  Garage Optimization
+                </span>
+              </div>
+
+              <h2 className="text-3xl sm:text-5xl font-black uppercase italic tracking-tighter leading-tight mb-4 drop-shadow-xl">
+                UPGRADING <br />{" "}
+                <span className="text-black/30">THE VAULT</span>
+              </h2>
+
+              <p className="text-xs sm:text-lg font-bold uppercase italic text-orange-50/80 max-w-sm mx-auto leading-snug tracking-wide">
+                Something huge is under construction. <br />
+                <span className="text-white">Keep your eyes on the track.</span>
+              </p>
+
+              {/* Bottom Status (Meaningful Text) */}
+              <div className="mt-8 inline-flex items-center gap-3 bg-black/10 px-6 py-3 rounded-2xl border border-white/10 backdrop-blur-md group-hover:bg-black/20 transition-colors">
+                <Gauge className="size-4 text-yellow-300 animate-pulse" />
+                <div className="flex flex-col items-start leading-none">
+                  <span className="text-[8px] font-black uppercase tracking-widest opacity-50">
+                    Status
+                  </span>
+                  <span className="text-xs font-black uppercase italic tracking-tighter">
+                    Tuning Elite Offers...
+                  </span>
+                </div>
               </div>
             </div>
 
-            <h3 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-4">
-              No Active Deals Right Now
-            </h3>
-
-            <p className="text-gray-600 dark:text-gray-300 text-lg mb-6 max-w-md mx-auto">
-              Check back soon for amazing deals and exclusive offers on premium
-              tires and wheels!
-            </p>
-
-            <div className="inline-flex items-center gap-2 text-orange-600 dark:text-orange-400 font-semibold">
-              <Clock className="w-4 h-4" />
-              <span>New deals coming soon</span>
-            </div>
+            {/* Subtle Festive Lines */}
+            <div className="absolute top-0 right-1/3 w-px h-full bg-gradient-to-b from-transparent via-white/10 to-transparent rotate-6" />
+            <div className="absolute top-0 left-1/3 w-px h-full bg-gradient-to-b from-transparent via-white/10 to-transparent rotate-6" />
           </div>
         </div>
+
+        {/* Custom Keyframes in global or component styles */}
+        <style jsx>{`
+          @keyframes wiggle {
+            0%,
+            100% {
+              transform: rotate(-3deg);
+            }
+            50% {
+              transform: rotate(3deg);
+            }
+          }
+          .animate-wiggle {
+            animation: wiggle 2s ease-in-out infinite;
+          }
+          .animate-spin-slow {
+            animation: spin 12s linear infinite;
+          }
+        `}</style>
       </div>
     );
   }

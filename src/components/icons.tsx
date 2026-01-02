@@ -14,7 +14,7 @@ export const Logo: React.FC<IconSvgProps> = ({
     alt="logo"
     width={150}
     height={150}
-    className="dark:invert-0 invert"
+    className=""
   />
 );
 

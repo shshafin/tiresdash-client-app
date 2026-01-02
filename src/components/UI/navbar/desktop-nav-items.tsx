@@ -4,485 +4,80 @@ import { useState } from "react";
 import { NavbarItem } from "@heroui/navbar";
 import NextLink from "next/link";
 import { clsx } from "clsx";
-import { ChevronDown } from "lucide-react";
-import { link as linkStyles } from "@heroui/theme";
+import { ChevronDown, Zap, Target, Gauge, ChevronRight } from "lucide-react";
 import { siteConfig } from "@/src/config/site";
 import { useGetBrands } from "@/src/hooks/brand.hook";
 import { useGetCategories } from "@/src/hooks/categories.hook";
-import { useGetTyreSizes } from "@/src/hooks/tyreSize.hook";
-import { useGetMakes } from "@/src/hooks/makes.hook";
 import { useGetVehicleTypes } from "@/src/hooks/vehicleType.hook";
 import { useGetWheelWidthTypes } from "@/src/hooks/wheelWhidthType";
 
-const TireDropdown = () => {
-  const [activeTab, setActiveTab] = useState("vehicle");
-  const { data: bd } = useGetBrands({ limit: 6 });
-  const { data: cd } = useGetCategories({ limit: 6 });
-  const { data: vtd } = useGetVehicleTypes({ limit: 6 });
-  const { data: tsd } = useGetTyreSizes({});
-  const modifiedBrands = bd?.data?.map((brand: any, index: number) => {
-    return {
-      id: brand?._id,
-      name: brand?.name || "",
-      href: `/tire?brand=${brand?._id}`,
-    };
-  });
-  const modifiedCategories = cd?.data?.map((cat: any, index: number) => {
-    return {
-      id: cat?._id,
-      name: cat?.name || "",
-      href: `/tire?category=${cat?._id}`,
-    };
-  });
-  const modifiedTireSizes = tsd?.data?.map((ts: any, index: number) => {
-    return {
-      id: ts?._id,
-      name: ts?.tireSize || "",
-      href: `/tire?tireSize=${ts?._id}`,
-    };
-  });
-  const modifiedVehicleTypes = vtd?.data?.map((vt: any, index: number) => {
-    return {
-      id: vt?._id,
-      name: vt?.vehicleType || "",
-      href: `/tire?vehicleType=${vt?._id}`,
-    };
-  });
-  const tireDropdownData = {
-    // Tire dropdown data with tabs
-    tabs: [
-      {
-        id: "vehicle",
-        title: "SHOP BY VEHICLE",
-        content: {
-          sections: [
-            {
-              title: "VEHICLE TYPE",
-              items: modifiedVehicleTypes || [],
-            },
-            {
-              title: "Tire Type",
-              items: modifiedCategories || [],
-            },
-          ],
-        },
-      },
-      // {
-      //   id: "size",
-      //   title: "SHOP BY SIZE",
-      //   content: {
-      //     sections: [
-      //       {
-      //         title: "POPULAR SIZES",
-      //         items: modifiedTireSizes || [],
-      //       },
-      //     ],
-      //   },
-      // },
-    ],
-    brands: modifiedBrands || [],
-  };
-  const activeTabData = tireDropdownData.tabs.find(
-    (tab) => tab.id === activeTab
-  );
+// --- Data Mapper Helper ---
+const mapData = (data: any[], key: string, queryParam: string, path: string) =>
+  data?.map((item) => ({
+    id: item._id,
+    name: item[key] || item.name || "",
+    href: `/${path}?${queryParam}=${item._id}`,
+  })) || [];
+
+const SportyDropdown = ({
+  sections,
+  brands,
+}: {
+  sections: any[];
+  brands?: any[];
+}) => {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-6 w-[900px]">
-      <div className="grid grid-cols-4 gap-6">
-        {/* Left Tabs Section */}
-        <div className="space-y-2">
-          {tireDropdownData.tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={clsx(
-                "block w-full text-left text-sm font-medium px-3 py-2 rounded transition-colors",
-                activeTab === tab.id
-                  ? "bg-primary text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-              )}>
-              {tab.title}
-            </button>
-          ))}
-        </div>
-
-        {/* Right Content Section */}
-        <div className="col-span-3">
-          {activeTabData && (
-            <div className="grid grid-cols-3 gap-6">
-              {/* Dynamic Content Sections */}
-              {activeTabData.content.sections.map((section, index) => (
-                <div key={index}>
-                  <h3 className="font-semibold text-gray-800 mb-3 text-sm">
-                    {section.title}
-                  </h3>
-                  <div className="space-y-2">
-                    {section.items.map((item: any, itemIndex: number) => (
-                      <NextLink
-                        key={itemIndex}
-                        href={item.href}
-                        className="block text-sm text-gray-600 hover:text-primary transition-colors">
-                        {item.name}
-                      </NextLink>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              {/* Static Brands Column (always show for some tabs) */}
-              {(activeTab === "finder" || activeTab === "vehicle") && (
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-3 text-sm">
-                    TIRE BRANDS
-                  </h3>
-                  <div className="space-y-2">
-                    {tireDropdownData.brands.map((brand: any, index: any) => (
-                      <NextLink
-                        key={index}
-                        href={brand.href}
-                        className="block text-sm text-gray-600 hover:text-primary transition-colors">
-                        {brand.name}
-                      </NextLink>
-                    ))}
-                    {/* <NextLink
-                      href="/tire/brands"
-                      className="block text-sm text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      View All Brands
-                    </NextLink> */}
-                  </div>
-                </div>
-              )}
+    <div className="bg-white dark:bg-[#0b0d11] border-t-4 border-orange-600 rounded-b-[2.5rem] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.5)] p-10 animate-in fade-in slide-in-from-top-4 duration-300 w-[1000px] border-x border-b  dark:border-white/5">
+      <div className="grid grid-cols-4 gap-12">
+        {sections.map((section, idx) => (
+          <div
+            key={idx}
+            className="space-y-6">
+            <div className="flex items-center gap-2 group/title">
+              <div className="h-4 w-1 bg-orange-600 rounded-full skew-x-[-15deg] group-hover/title:h-6 transition-all" />
+              <h4 className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-[0.2em] italic">
+                {section.title}
+              </h4>
             </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const WheelDropdown = () => {
-  const [activeTab, setActiveTab] = useState("shop");
-  const { data: bd } = useGetBrands({ limit: 6 });
-  const { data: tsd } = useGetTyreSizes({});
-  const { data: md } = useGetMakes({ limit: 6 });
-  const { data: vtd } = useGetVehicleTypes({ limit: 6 });
-  const { data: wwt } = useGetWheelWidthTypes({ limit: 6 });
-  const modifiedBrands = bd?.data?.map((brand: any, index: number) => {
-    return {
-      id: brand?._id,
-      name: brand?.name || "",
-      href: `/wheel?brand=${brand?._id}`,
-    };
-  });
-  const modifiedWheelWidthTypes = wwt?.data?.map((ww: any, index: number) => {
-    return {
-      id: ww?._id,
-      name: ww?.widthType || "",
-      href: `/wheel?widthType=${ww?._id}`,
-    };
-  });
-  const modifiedTireSizes = tsd?.data?.map((ts: any, index: number) => {
-    return {
-      id: ts?._id,
-      name: ts?.tireSize || "",
-      href: `/wheel?tireSize=${ts?._id}`,
-    };
-  });
-  const modifiedMakes = md?.data?.map((ts: any, index: number) => {
-    return {
-      id: ts?._id,
-      name: ts?.make || "",
-      href: `/wheel?make=${ts?._id}`,
-    };
-  });
-  const modifiedVehicleTypes = vtd?.data?.map((vt: any, index: number) => {
-    return {
-      id: vt?._id,
-      name: vt?.vehicleType || "",
-      href: `/tire?vehicleType=${vt?._id}`,
-    };
-  });
-  const wheelDropdownData = {
-    tabs: [
-      {
-        id: "shop",
-        title: "SHOP WHEELS",
-        content: {
-          sections: [
-            {
-              title: "WHEEL STYLE",
-              items: modifiedWheelWidthTypes || [],
-            },
-            {
-              title: "VEHICLE TYPES",
-              items: modifiedVehicleTypes || [],
-            },
-          ],
-        },
-      },
-      // {
-      //   id: "vehicle",
-      //   title: "SHOP BY VEHICLE",
-      //   content: {
-      //     sections: [
-      //       {
-      //         title: "VEHICLE TYPE",
-      //         items: modifiedVehicleTypes || [],
-      //       },
-      //       {
-      //         title: "POPULAR MAKES",
-      //         items: modifiedMakes || [],
-      //       },
-      //     ],
-      //   },
-      // },
-      // {
-      //   id: "size",
-      //   title: "SHOP BY SIZE",
-      //   content: {
-      //     sections: [
-      //       {
-      //         title: "POPULAR SIZES",
-      //         items: modifiedTireSizes || [],
-      //       },
-      //     ],
-      //   },
-      // },
-    ],
-    brands: modifiedBrands || [],
-  };
-  const activeTabData = wheelDropdownData.tabs.find(
-    (tab) => tab.id === activeTab
-  );
-
-  return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-6 w-[900px]">
-      <div className="grid grid-cols-4 gap-6">
-        {/* Left Tabs Section */}
-        <div className="space-y-2">
-          {wheelDropdownData.tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={clsx(
-                "block w-full text-left text-sm font-medium px-3 py-2 rounded transition-colors",
-                activeTab === tab.id
-                  ? "bg-primary text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-              )}>
-              {tab.title}
-            </button>
-          ))}
-        </div>
-
-        {/* Right Content Section */}
-        <div className="col-span-3">
-          {activeTabData && (
-            <div className="grid grid-cols-3 gap-6">
-              {/* Dynamic Content Sections */}
-              {activeTabData.content.sections.map((section, index) => (
-                <div key={index}>
-                  <h3 className="font-semibold text-gray-800 mb-3 text-sm">
-                    {section.title}
-                  </h3>
-                  <div className="space-y-2">
-                    {section.items.map((item: any, itemIndex: number) => (
-                      <NextLink
-                        key={itemIndex}
-                        href={item.href}
-                        className="block text-sm text-gray-600 hover:text-primary transition-colors">
-                        {item.name}
-                      </NextLink>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              {/* Static Brands/Styles Column (always show for some tabs) */}
-              {(activeTab === "shop" || activeTab === "vehicle") && (
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-3 text-sm">
-                    WHEEL BRANDS
-                  </h3>
-                  <div className="space-y-2">
-                    {wheelDropdownData.brands.map(
-                      (brand: any, index: number) => (
-                        <NextLink
-                          key={index}
-                          href={brand.href}
-                          className="block text-sm text-gray-600 hover:text-primary transition-colors">
-                          {brand.name}
-                        </NextLink>
-                      )
-                    )}
-                    {/* <NextLink
-                      href="/wheel/brands"
-                      className="block text-sm text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      View All Brands
-                    </NextLink> */}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const AccessoriesDropdown = () => {
-  const [activeTab, setActiveTab] = useState("tire-accessories");
-
-  const accessoriesTabs = [
-    {
-      id: "tire-accessories",
-      title: "TIRE ACCESSORIES",
-      content: [
-        { name: "Tire Pressure Monitors", href: "/accessories/tire/tpms" },
-        { name: "Tire Chains", href: "/accessories/tire/chains" },
-        { name: "Tire Covers", href: "/accessories/tire/covers" },
-        { name: "Valve Stems", href: "/accessories/tire/valve-stems" },
-      ],
-    },
-    {
-      id: "wheel-accessories",
-      title: "WHEEL ACCESSORIES",
-      content: [
-        { name: "Lug Nuts", href: "/accessories/wheel/lug-nuts" },
-        { name: "Center Caps", href: "/accessories/wheel/center-caps" },
-        { name: "Wheel Locks", href: "/accessories/wheel/locks" },
-        { name: "Spacers", href: "/accessories/wheel/spacers" },
-      ],
-    },
-    {
-      id: "tools",
-      title: "TOOLS & EQUIPMENT",
-      content: [
-        { name: "Tire Irons", href: "/accessories/tools/tire-irons" },
-        { name: "Jack Stands", href: "/accessories/tools/jack-stands" },
-        { name: "Torque Wrenches", href: "/accessories/tools/torque-wrenches" },
-        { name: "Tire Gauges", href: "/accessories/tools/gauges" },
-      ],
-    },
-  ];
-
-  const activeTabData = accessoriesTabs.find((tab) => tab.id === activeTab);
-
-  return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4 w-[600px]">
-      <div className="grid grid-cols-3 gap-4">
-        {/* Left Tabs */}
-        <div className="space-y-2">
-          {accessoriesTabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={clsx(
-                "block w-full text-left text-sm font-medium px-3 py-2 rounded transition-colors",
-                activeTab === tab.id
-                  ? "bg-primary text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-              )}>
-              {tab.title}
-            </button>
-          ))}
-        </div>
-
-        {/* Right Content */}
-        <div className="col-span-2">
-          {activeTabData && (
-            <div className="space-y-2">
-              {activeTabData.content.map((item, index) => (
+            <div className="flex flex-col gap-2">
+              {section.items.map((item: any, i: number) => (
                 <NextLink
-                  key={index}
+                  key={i}
                   href={item.href}
-                  className="block text-sm text-gray-600 hover:text-primary transition-colors">
-                  {item.name}
+                  className="group flex items-center justify-between p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-all border border-transparent hover:border-gray-200 dark:hover:border-white/10">
+                  <span className="text-sm font-bold text-gray-500 dark:text-gray-400 group-hover:text-black dark:group-hover:text-white group-hover:translate-x-1 transition-all">
+                    {item.name}
+                  </span>
+                  <ChevronRight
+                    size={14}
+                    className="opacity-0 group-hover:opacity-100 text-orange-500 transition-all"
+                  />
                 </NextLink>
               ))}
             </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const FinancingDropdown = () => {
-  const [activeTab, setActiveTab] = useState("options");
-
-  const financingTabs = [
-    {
-      id: "options",
-      title: "FINANCING OPTIONS",
-      content: [
-        { name: "0% APR Financing", href: "/financing/zero-apr" },
-        { name: "Low Monthly Payments", href: "/financing/low-payments" },
-        { name: "No Credit Check", href: "/financing/no-credit-check" },
-        { name: "Bad Credit OK", href: "/financing/bad-credit" },
-      ],
-    },
-    {
-      id: "apply",
-      title: "APPLY NOW",
-      content: [
-        { name: "Quick Application", href: "/financing/apply/quick" },
-        { name: "Pre-Qualification", href: "/financing/apply/prequalify" },
-        { name: "Check Your Rate", href: "/financing/apply/check-rate" },
-        { name: "Application Status", href: "/financing/apply/status" },
-      ],
-    },
-    {
-      id: "tools",
-      title: "TOOLS & CALCULATORS",
-      content: [
-        { name: "Payment Calculator", href: "/financing/calculator" },
-        { name: "Credit Score Check", href: "/financing/credit-check" },
-        { name: "Trade-In Value", href: "/financing/trade-in" },
-        { name: "Rebates & Offers", href: "/financing/rebates" },
-      ],
-    },
-  ];
-
-  const activeTabData = financingTabs.find((tab) => tab.id === activeTab);
-
-  return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4 w-[500px]">
-      <div className="grid grid-cols-2 gap-4">
-        {/* Left Tabs */}
-        <div className="space-y-2">
-          {financingTabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={clsx(
-                "block w-full text-left text-sm font-medium px-3 py-2 rounded transition-colors",
-                activeTab === tab.id
-                  ? "bg-primary text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-              )}>
-              {tab.title}
-            </button>
-          ))}
-        </div>
-
-        {/* Right Content */}
-        <div>
-          {activeTabData && (
-            <div className="space-y-2">
-              {activeTabData.content.map((item, index) => (
+          </div>
+        ))}
+        {brands && (
+          <div className="col-span-1 bg-gray-900 dark:bg-black/40 rounded-[2rem] p-8 border border-gray-800 relative overflow-hidden group/brand">
+            <div className="absolute -right-4 -bottom-4 opacity-10 group-hover/brand:scale-110 transition-transform text-white">
+              <Gauge size={120} />
+            </div>
+            <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] italic mb-8 flex items-center gap-2">
+              <Target size={14} /> ELITE SERIES
+            </h4>
+            <div className="grid grid-cols-1 gap-3 relative z-10">
+              {brands.map((brand: any, i: number) => (
                 <NextLink
-                  key={index}
-                  href={item.href}
-                  className="block text-sm text-gray-600 hover:text-primary transition-colors">
-                  {item.name}
+                  key={i}
+                  href={brand.href}
+                  className="text-[11px] font-black uppercase italic text-gray-400 hover:text-white transition-all flex items-center gap-2 group">
+                  <div className="h-1 w-0 group-hover:w-3 bg-orange-600 transition-all rounded-full" />
+                  {brand.name}
                 </NextLink>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -491,55 +86,127 @@ const FinancingDropdown = () => {
 const DeskTopNavItems = () => {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
+  const { data: bd } = useGetBrands({ limit: 6 });
+  const { data: cd } = useGetCategories({ limit: 6 });
+  const { data: vtd } = useGetVehicleTypes({ limit: 6 });
+  const { data: wwt } = useGetWheelWidthTypes({ limit: 6 });
+
+  const navItems = siteConfig.navItems.filter(
+    (item) => item.label !== "VISUALIZER"
+  );
+
   const renderDropdown = (label: string) => {
     switch (label) {
       case "TIRES":
-        return <TireDropdown />;
+        return (
+          <SportyDropdown
+            sections={[
+              {
+                title: "Vehicle Fits",
+                items: mapData(vtd?.data, "vehicleType", "vehicleType", "tire"),
+              },
+              {
+                title: "Performance",
+                items: mapData(cd?.data, "name", "category", "tire"),
+              },
+              {
+                title: "Specialty",
+                items: [
+                  { name: "Run Flat", href: "#" },
+                  { name: "Off-Road", href: "#" },
+                ],
+              },
+            ]}
+            brands={mapData(bd?.data, "name", "brand", "tire")}
+          />
+        );
       case "WHEELS":
-        return <WheelDropdown />;
-      case "ACCESSORIES":
-        return <AccessoriesDropdown />;
-      case "FINANCING":
-        return <FinancingDropdown />;
+        return (
+          <SportyDropdown
+            sections={[
+              {
+                title: "Main Styles",
+                items: mapData(wwt?.data, "widthType", "widthType", "wheel"),
+              },
+              {
+                title: "Fitment Guides",
+                items: mapData(
+                  vtd?.data,
+                  "vehicleType",
+                  "vehicleType",
+                  "wheel"
+                ),
+              },
+              {
+                title: "Finish",
+                items: [
+                  { name: "Gloss Black", href: "#" },
+                  { name: "Matte Bronze", href: "#" },
+                ],
+              },
+            ]}
+            brands={mapData(bd?.data, "name", "brand", "wheel")}
+          />
+        );
       default:
         return null;
     }
   };
 
   return (
-    <div className="mx-auto">
-      <ul className="flex gap-3 md:gap-2">
-        {siteConfig.navItems.map((item) => (
-          <NavbarItem key={item.href}>
-            {item.hasDropdown ? (
-              <div
-                className="relative"
-                onMouseEnter={() => setHoveredItem(item.label)}
-                onMouseLeave={() => setHoveredItem(null)}>
+    <div className="mx-auto flex h-full items-center">
+      <ul className="flex items-center gap-2">
+        {navItems.map((item) => (
+          <NavbarItem
+            key={item.href}
+            className="static flex items-center h-full">
+            <div
+              onMouseEnter={() => setHoveredItem(item.label)}
+              onMouseLeave={() => setHoveredItem(null)}
+              className="flex items-center h-full relative group/nav">
+              {item.hasDropdown ? (
                 <div
                   className={clsx(
-                    linkStyles({ color: "foreground" }),
-                    "data-[active=true]:text-primary data-[active=true]:font-medium text-sm md:text-xs bg-default-100 md:px-1 lg:px-2 py-2 rounded-md cursor-pointer flex items-center gap-1"
+                    "px-5 py-2 rounded-xl transition-all duration-300 flex items-center gap-2 cursor-pointer border border-transparent",
+                    "text-[11px] font-black uppercase tracking-[0.15em] italic",
+                    hoveredItem === item.label
+                      ? "text-orange-600 bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-900/30 shadow-[0_5px_15px_rgba(249,115,22,0.1)]"
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-50/50 dark:bg-white/5 border-gray-100 dark:border-white/5"
                   )}>
                   {item.label}
-                  <ChevronDown className="h-3 w-3" />
+                  <ChevronDown
+                    className={clsx(
+                      "h-3 w-3 transition-transform duration-500",
+                      hoveredItem === item.label && "rotate-180"
+                    )}
+                  />
                 </div>
-                {hoveredItem === item.label && (
-                  <div className="absolute top-full left-0 mt-1 z-50">
+              ) : (
+                <NextLink
+                  href={item.href}
+                  className="px-5 py-2 rounded-xl transition-all duration-300 flex items-center text-[11px] font-black uppercase tracking-[0.15em] italic text-gray-600 dark:text-gray-400 border border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/5 hover:text-orange-600 hover:border-orange-200 dark:hover:border-orange-900/30 hover:shadow-lg hover:shadow-orange-500/10">
+                  {item.label}
+                </NextLink>
+              )}
+
+              {/* Decorative active line under the button */}
+              <div
+                className={clsx(
+                  "absolute bottom-2 left-1/2 -translate-x-1/2 h-[2px] bg-orange-600 transition-all duration-300 rounded-full",
+                  hoveredItem === item.label
+                    ? "w-1/2 opacity-100"
+                    : "w-0 opacity-0"
+                )}
+              />
+
+              {item.hasDropdown && hoveredItem === item.label && (
+                <div className="absolute left-1/2 -translate-x-1/2 top-full flex justify-center z-[9999] pt-3">
+                  <div onMouseEnter={() => setHoveredItem(item.label)}>
                     {renderDropdown(item.label)}
                   </div>
-                )}
-              </div>
-            ) : (
-              <NextLink
-                href={item.href}
-                className={clsx(
-                  linkStyles({ color: "foreground" }),
-                  "data-[active=true]:text-primary data-[active=true]:font-medium text-sm md:text-xs bg-default-100 md:px-1 lg:px-2 py-2 rounded-md"
-                )}>
-                {item.label}
-              </NextLink>
-            )}
+                </div>
+              )}
+            </div>
           </NavbarItem>
         ))}
       </ul>

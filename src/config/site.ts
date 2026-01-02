@@ -83,10 +83,10 @@ export const siteConfig = {
       label: "DEALS",
       href: "/deals",
     },
-    {
-      label: "WHEEL VISUALIZER",
-      href: "/wheel-visualizer",
-    },
+    // {
+    //   label: "WHEEL VISUALIZER",
+    //   href: "/wheel-visualizer",
+    // },
   ],
   links: {
     github: "https://github.com/heroui-inc/heroui",

@@ -2,892 +2,578 @@
 
 import { useState } from "react";
 import { useGetSingleWheel } from "@/src/hooks/wheel.hook";
+import { useAddItemToCart } from "@/src/hooks/cart.hook";
 import { useUser } from "@/src/context/user.provider";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
-import { Chip } from "@heroui/chip";
 import { Tabs, Tab } from "@heroui/tabs";
 import {
   ShoppingCart,
-  Heart,
   Star,
-  Shield,
-  Truck,
+  ShieldCheck,
   ArrowLeft,
   Plus,
   Minus,
-  Check,
-  Info,
+  Zap,
+  Activity,
+  Package,
+  X,
+  ChevronRight,
+  Trash2,
+  Trophy,
+  Gauge,
+  Palette,
   Settings,
+  History,
+  Info,
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAddItemToCart } from "@/src/hooks/cart.hook";
-import { useAddItemToWishlist } from "@/src/hooks/wishlist.hook";
 import {
   useGetProductReview,
   useCreateReview,
-  useUpdateReview,
   useDeleteReview,
 } from "@/src/hooks/review.hook";
-import { redirect } from "next/navigation";
-
-interface WheelData {
-  _id: string;
-  name: string;
-  year: { year: number };
-  make: { make: string; logo: string };
-  model: { model: string };
-  trim: { trim: string };
-  tireSize: { tireSize: string };
-  drivingType: { title: string; subTitle: string };
-  brand: { name: string; logo: string; description: string };
-  category: { name: string; image: string };
-  description: string;
-  images: string[];
-  price: number;
-  discountPrice: number;
-  stockQuantity: number;
-  warranty: string;
-  // Wheel specifications
-  diameter: { diameter: number };
-  width: { width: number };
-  boltPattern: string;
-  offset: number;
-  hubBoreSize: number;
-  numberOFBolts: number;
-  loadCapacity: number;
-  loadRating: number;
-  finish: string;
-  wheelColor: string;
-  materialType: string;
-  wheelSize: string;
-  wheelAccent: string;
-  wheelPieces: string;
-  wheelWidth: string;
-  wheelType: string;
-  // Additional info
-  productLine: string[];
-  conditionInfo: string;
-  unitName: string;
-  grossWeight: string;
-  GTIN: string;
-  ATVOffset: string;
-  BoltsQuantity: string;
-  hubBore: string;
-  constructionType: string;
-}
+import { useRouter } from "next/navigation";
 
 const SingleWheelPage = ({ params }: { params: { id: string } }) => {
   const { user } = useUser();
+  const router = useRouter();
   const queryClient = useQueryClient();
-  const { data, isLoading, isError } = useGetSingleWheel(params.id);
-  const wheel: WheelData = data?.data;
+  const { data, isLoading } = useGetSingleWheel(params.id);
+  const wheel = data?.data;
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [wheelSet, setWheelSet] = useState(1);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
 
   const { mutate: addToCart, isPending: addingToCart } = useAddItemToCart({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["GET_CART"] });
-      toast.success("Added to cart successfully!");
-    },
-    onError: () => {
-      toast.error("Failed to add to cart");
+      toast.success("Speeding to your cart!");
+      router.push("/cart");
     },
     userId: user?._id,
   });
 
-  const { mutate: addToWishlist, isPending: addingToWishlist } =
-    useAddItemToWishlist({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["GET_WISHLIST"] });
-        toast.success("Added to wishlist!");
-      },
-      onError: () => {
-        toast.error("Failed to add to wishlist");
-      },
-      userId: user?._id,
-    });
-
-  // Review hooks and state
-  const {
-    data: reviewsData,
-    isLoading: reviewsLoading,
-    refetch: refetchReview,
-  } = useGetProductReview({ id: params.id, productType: "wheel" });
+  const { data: reviewsData } = useGetProductReview({
+    id: params.id,
+    productType: "wheel",
+  });
   const reviews = reviewsData?.data || [];
-  const totalRating = reviews.reduce(
-    (sum: any, review: any) => sum + review.rating,
-    0
-  );
-  const averageRating = reviews.length ? totalRating / reviews.length : 0;
-
-  const [showReviewForm, setShowReviewForm] = useState<boolean>(false);
-  const [editingReview, setEditingReview] = useState<any>(null);
-  const [reviewForm, setReviewForm] = useState({
-    rating: 5,
-    comment: "",
-  });
-
-  const { mutate: addReview, isPending: addingReview } = useCreateReview({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["PRODUCT_REVIEWS"] });
-      toast.success("Review added successfully!");
-      setShowReviewForm(false);
-      setReviewForm({ rating: 5, comment: "" });
-    },
-    onError: () => {
-      toast.error("Failed to add review");
-    },
-  });
-
-  const { mutate: updateReview, isPending: updatingReview } = useUpdateReview({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["PRODUCT_REVIEWS"] });
-      toast.success("Review updated successfully!");
-      setEditingReview(null);
-      setShowReviewForm(false);
-      setReviewForm({ rating: 5, comment: "" });
-    },
-    onError: () => {
-      toast.error("Failed to update review");
-    },
-  });
-
-  const { mutate: deleteReview, isPending: deletingReview } = useDeleteReview({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["PRODUCT_REVIEWS"] });
-      toast.success("Review deleted successfully!");
-    },
-    onError: () => {
-      toast.error("Failed to delete review");
-    },
-  });
-
-  const handleAddToCart = () => {
-    if (!user) {
-      toast.error("Please login to add items to cart");
-      redirect(`/login?redirect=/wheel/${params.id}`);
-      return;
-    }
-    addToCart({
-      productType: "wheel",
-      productId: wheel._id,
-      quantity: quantity,
-    });
-  };
-
-  const handleAddToWishlist = () => {
-    if (!user) {
-      toast.error("Please login to add items to wishlist");
-      redirect(`/login?redirect=/wheel/${params.id}`);
-      return;
-    }
-    addToWishlist({
-      productType: "wheel",
-      product: wheel._id,
-    });
-  };
-
-  const handleSubmitReview = () => {
-    if (!user) {
-      toast.error("Please login to add a review");
-      return;
-    }
-
-    if (editingReview) {
-      updateReview({
-        id: editingReview._id,
-        data: {
-          rating: reviewForm.rating,
-          comment: reviewForm.comment,
-        },
-      });
-    } else {
-      addReview({
-        product: wheel._id,
-        productType: "wheel",
-        rating: reviewForm.rating,
-        comment: reviewForm.comment,
-      });
-    }
-  };
-
-  const handleEditReview = (review: any) => {
-    setEditingReview(review);
-    setReviewForm({
-      rating: review.rating,
-      comment: review.comment,
-    });
-    setShowReviewForm(true);
-  };
-
-  const handleDeleteReview = (reviewId: any) => {
-    if (confirm("Are you sure you want to delete this review?")) {
-      deleteReview(reviewId);
-    }
-  };
-
-  const handleCancelReview = () => {
-    setShowReviewForm(false);
-    setEditingReview(null);
-    setReviewForm({ rating: 5, comment: "" });
-  };
-
-  const renderStars = (
-    rating: any,
-    interactive = false,
-    onRatingChange: any = null
-  ) => {
-    return (
-      <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            type="button"
-            onClick={() =>
-              interactive && onRatingChange && onRatingChange(star)
-            }
-            className={`${interactive ? "cursor-pointer hover:scale-110" : "cursor-default"} transition-transform`}
-            disabled={!interactive}>
-            <Star
-              className={`h-5 w-5 ${
-                star <= rating
-                  ? "fill-yellow-400 text-yellow-400"
-                  : "fill-gray-200 text-gray-200"
-              }`}
-            />
-          </button>
-        ))}
-      </div>
-    );
-  };
-
-  const discountPercentage = wheel?.discountPrice
-    ? Math.round(((wheel.price - wheel.discountPrice) / wheel.price) * 100)
+  const averageRating = reviews.length
+    ? reviews.reduce((sum: any, r: any) => sum + r.rating, 0) / reviews.length
     : 0;
 
-  if (isLoading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading wheel details...</p>
-        </div>
-      </div>
-    );
-  }
+  const { mutate: addReview } = useCreateReview({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["PRODUCT_REVIEWS"] });
+      toast.success("Review posted!");
+      setShowReviewForm(false);
+      setReviewForm({ rating: 5, comment: "" });
+    },
+  });
 
-  if (isError || !wheel) {
+  const { mutate: deleteReview } = useDeleteReview({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["PRODUCT_REVIEWS"] });
+      toast.success("Review deleted!");
+    },
+  });
+
+  const getUnitPrice = () => {
+    if (wheelSet === 2 && wheel?.twoSetDiscountPrice)
+      return wheel.twoSetDiscountPrice / 2;
+    if (wheelSet === 4 && wheel?.fourSetDiscountPrice)
+      return wheel.fourSetDiscountPrice / 4;
+    return wheel?.discountPrice || wheel?.price || 0;
+  };
+
+  const finalQuantity = quantity * wheelSet;
+  const totalPrice = getUnitPrice() * finalQuantity;
+
+  if (isLoading)
     return (
-      <div className="flex h-[50vh] flex-col items-center justify-center gap-4">
-        <p className="text-xl font-semibold text-red-500">Wheel not found</p>
-        <Link href="/wheels">
-          <Button>Back to Wheels</Button>
-        </Link>
+      <div className="flex h-screen items-center justify-center bg-white">
+        <Zap
+          className="animate-spin text-blue-600"
+          size={48}
+        />
       </div>
     );
-  }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      {/* Breadcrumb */}
-      <div className="mb-6">
-        <Link href="/wheel">
-          <Button
-            variant="ghost"
-            className="gap-2 mb-4">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Wheels
-          </Button>
-        </Link>
-        <div className="text-sm text-gray-500">
-          <span>Wheels</span> / <span>{wheel.brand.name}</span> /{" "}
-          <span>{wheel.name}</span>
-        </div>
-      </div>
+    <div className="bg-white dark:bg-[#0f1115] min-h-screen pb-20">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-[10px] md:text-sm font-black uppercase tracking-widest text-gray-400 hover:text-blue-600 mb-6">
+          <ArrowLeft size={16} /> BACK TO SHOWROOM
+        </button>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Image Gallery */}
-        <div className="space-y-4">
-          <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
-            <Image
-              src={`${process.env.NEXT_PUBLIC_BASE_URL}${wheel.images[selectedImage]}`}
-              alt={wheel.name}
-              fill
-              className="object-cover"
-            />
-            {discountPercentage > 0 && (
-              //   <Badge content={`${discountPercentage}% OFF`} color="danger" className="absolute top-4 left-4" />
-              <Chip color="secondary">{`${discountPercentage}% OFF`}</Chip>
-            )}
-          </div>
-          <div className="flex gap-2 overflow-x-auto">
-            {wheel.images.map((image, index) => (
-              <button
-                key={index}
-                onClick={() => setSelectedImage(index)}
-                className={`relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border-2 ${
-                  selectedImage === index ? "border-primary" : "border-gray-200"
-                }`}>
-                <Image
-                  src={`${process.env.NEXT_PUBLIC_BASE_URL}${image}`}
-                  alt={`${wheel.name} ${index + 1}`}
-                  fill
-                  className="object-cover"
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Product Info */}
-        <div className="space-y-6">
-          {/* Brand and Category */}
-          <div className="flex items-center gap-4">
-            <div className="relative h-12 w-12">
+        <div className="grid gap-8 lg:grid-cols-2">
+          {/* Gallery */}
+          <div className="space-y-4">
+            <div className="relative aspect-square rounded-[40px] overflow-hidden bg-[#f8f9fb] dark:bg-[#1a1d23] border border-gray-100 dark:border-gray-800">
               <Image
-                src={`${process.env.NEXT_PUBLIC_BASE_URL}${wheel.brand.logo}`}
-                alt={wheel.brand.name}
+                src={
+                  wheel?.images?.[selectedImage]
+                    ? `${process.env.NEXT_PUBLIC_BASE_URL}${wheel.images[selectedImage]}`
+                    : "/fallback.png"
+                }
+                alt={wheel?.name}
                 fill
-                className="object-contain"
+                className="object-contain p-12"
+                priority
               />
             </div>
-            <div>
-              <p className="text-sm text-gray-500">{wheel.brand.name}</p>
-              <Chip
-                size="sm"
-                variant="flat">
-                {wheel.category.name}
-              </Chip>
+            <div className="flex gap-2 overflow-x-auto">
+              {wheel?.images?.map((image: string, index: number) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedImage(index)}
+                  className={`relative h-20 w-20 flex-shrink-0 rounded-2xl overflow-hidden border-4 ${selectedImage === index ? "border-blue-600" : "border-transparent opacity-60"}`}>
+                  <Image
+                    src={`${process.env.NEXT_PUBLIC_BASE_URL}${image}`}
+                    alt="thumb"
+                    fill
+                    className="object-cover"
+                  />
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Title and Description */}
-          <div>
-            <h1 className="text-3xl font-bold mb-2">{wheel.name}</h1>
-            <p className="text-gray-600">{wheel.description}</p>
-          </div>
-
-          {/* Vehicle Compatibility */}
-          <Card>
-            <CardBody className="p-4">
-              <h3 className="font-semibold mb-2">Vehicle Compatibility</h3>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <span className="text-gray-500">Year:</span> {wheel.year.year}
-                </div>
-                <div>
-                  <span className="text-gray-500">Make:</span> {wheel.make.make}
-                </div>
-                <div>
-                  <span className="text-gray-500">Model:</span>{" "}
-                  {wheel.model.model}
-                </div>
-                <div>
-                  <span className="text-gray-500">Trim:</span> {wheel.trim.trim}
-                </div>
-                <div>
-                  <span className="text-gray-500">Driving Type:</span>{" "}
-                  {wheel.drivingType.title}
-                </div>
-                <div>
-                  <span className="text-gray-500">Tire Size:</span>{" "}
-                  {wheel.tireSize.tireSize}
+          {/* Info */}
+          <div className="flex flex-col">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="relative h-14 w-14 bg-white rounded-xl p-1 border border-gray-100 shadow-sm">
+                <Image
+                  src={`${process.env.NEXT_PUBLIC_BASE_URL}${wheel?.brand?.logo}`}
+                  alt="brand"
+                  fill
+                  className="object-contain p-1"
+                />
+              </div>
+              <div>
+                <h4 className="text-blue-600 font-black uppercase text-xs">
+                  {wheel?.brand?.name}
+                </h4>
+                <div className="flex items-center gap-1">
+                  <Star
+                    size={12}
+                    className="fill-orange-500 text-orange-500"
+                  />
+                  <span className="text-xs font-bold">
+                    {averageRating.toFixed(1)} Alloy Rating
+                  </span>
                 </div>
               </div>
-            </CardBody>
-          </Card>
+            </div>
 
-          {/* Wheel Specifications */}
-          <Card>
-            <CardBody className="p-4">
-              <h3 className="font-semibold mb-2 flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                Wheel Specifications
-              </h3>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <span className="text-gray-500">Rim Diameter:</span>{" "}
-                  {wheel.diameter.diameter}"
-                </div>
-                <div>
-                  <span className="text-gray-500">Rim Width:</span>{" "}
-                  {wheel.width.width}"
-                </div>
-                <div>
-                  <span className="text-gray-500">Bolt Pattern:</span>{" "}
-                  {wheel.boltPattern}
-                </div>
-                <div>
-                  <span className="text-gray-500">Offset:</span> {wheel.offset}
-                  mm
-                </div>
-                <div>
-                  <span className="text-gray-500">Hub Bore:</span>{" "}
-                  {wheel.hubBoreSize}mm
-                </div>
-                <div>
-                  <span className="text-gray-500">Number of Bolts:</span>{" "}
-                  {wheel.numberOFBolts}
-                </div>
-              </div>
-            </CardBody>
-          </Card>
+            <h1 className="text-4xl md:text-6xl font-black text-gray-900 dark:text-white uppercase italic tracking-tighter mb-6">
+              {wheel?.name}
+            </h1>
 
-          {/* Pricing */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              {wheel.discountPrice ? (
-                <>
-                  <span className="text-3xl font-bold text-green-600">
-                    ${wheel.discountPrice.toFixed(2)}
-                  </span>
-                  <span className="text-xl text-gray-500 line-through">
-                    ${wheel.price.toFixed(2)}
-                  </span>
-                  <Chip
-                    color="danger"
-                    size="sm">
-                    Save ${(wheel.price - wheel.discountPrice).toFixed(2)}
-                  </Chip>
-                </>
-              ) : (
-                <span className="text-3xl font-bold">
-                  ${wheel.price.toFixed(2)}
+            <div className="bg-gradient-to-br from-blue-900 to-black text-white rounded-[32px] p-8 mb-8 relative overflow-hidden">
+              <div className="relative z-10">
+                <p className="text-blue-400 text-[10px] font-bold uppercase mb-1">
+                  Total Upgrade Price
+                </p>
+                <span className="text-5xl md:text-7xl font-black italic">
+                  ${totalPrice.toFixed(2)}
                 </span>
+              </div>
+            </div>
+
+            {/* Selection Buttons */}
+            {/* Selection Buttons - ✅ FIXED Logic with Conditional Rendering */}
+            <div className="space-y-6">
+              <div className="flex flex-wrap gap-3">
+                {/* Pair Button - Only shows if price > 0 */}
+                {wheel?.twoSetDiscountPrice > 0 && (
+                  <button
+                    onClick={() => {
+                      setWheelSet(2);
+                      setQuantity(1);
+                    }}
+                    className={`flex-1 py-5 rounded-[24px] border-2 flex flex-col items-center transition-all ${wheelSet === 2 ? "bg-gradient-to-br from-rose-600 to-rose-900 border-rose-400 text-white shadow-lg scale-[1.02]" : "bg-gradient-to-br from-rose-600 to-rose-900 border-rose-400  text-white dark:text-white hover:border-rose-400"}`}>
+                    <span className="font-black text-sm uppercase">
+                      Buy Pair (2 PC)
+                    </span>
+                    <span className="text-[9px] font-bold opacity-80 uppercase">
+                      Special Combo Price
+                    </span>
+                  </button>
+                )}
+
+                {/* Full Set Button - Only shows if price > 0 */}
+                {wheel?.fourSetDiscountPrice > 0 && (
+                  <button
+                    onClick={() => {
+                      setWheelSet(4);
+                      setQuantity(1);
+                    }}
+                    className={`flex-1 py-5 rounded-[24px] border-2 flex flex-col items-center transition-all ${wheelSet === 4 ? "bg-gradient-to-br from-emerald-600 to-emerald-900 border-emerald-400 text-white shadow-lg scale-[1.02]" : "bg-white dark:bg-white/5 border-gray-100 dark:border-gray-800 text-gray-900 dark:text-white hover:border-emerald-400"}`}>
+                    <span className="font-black text-sm uppercase">
+                      Full Set (4 PC)
+                    </span>
+                    <span className="text-[9px] font-bold opacity-80 uppercase">
+                      Transformation Deal
+                    </span>
+                  </button>
+                )}
+              </div>
+
+              {wheelSet !== 1 && (
+                <button
+                  onClick={() => {
+                    setWheelSet(1);
+                    setQuantity(1);
+                  }}
+                  className="w-full py-3 rounded-2xl bg-gray-100 dark:bg-white/5 border-2 border-dashed border-gray-300 text-gray-600 font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 hover:text-white transition-all">
+                  RETURN TO SINGLE UNIT
+                </button>
               )}
-            </div>
-            <p className="text-sm text-gray-500">Price per wheel</p>
-          </div>
 
-          {/* Stock Status */}
-          <div className="flex items-center gap-2">
-            {wheel.stockQuantity > 0 ? (
-              <>
-                <Check className="h-5 w-5 text-green-500" />
-                <span className="text-green-600 font-medium">
-                  In Stock ({wheel.stockQuantity} available)
-                </span>
-              </>
-            ) : (
-              <span className="text-red-500 font-medium">Out of Stock</span>
-            )}
-          </div>
-
-          {/* Quantity Selector */}
-          <div className="flex items-center gap-4">
-            <span className="font-medium">Quantity:</span>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="bordered"
-                onPress={() => setQuantity(Math.max(1, quantity - 1))}
-                disabled={quantity <= 1}>
-                <Minus className="h-4 w-4" />
-              </Button>
-              <span className="w-12 text-center font-medium">{quantity}</span>
-              <Button
-                size="sm"
-                variant="bordered"
-                onPress={() =>
-                  setQuantity(Math.min(wheel.stockQuantity, quantity + 1))
-                }
-                disabled={quantity >= wheel.stockQuantity}>
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button
-              size="lg"
-              className="flex-1 gap-2 py-2 px-3 bg-gradient-to-r from-orange-600 to-orange-400 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-500 flex items-center"
-              onPress={handleAddToCart}
-              disabled={addingToCart || wheel.stockQuantity === 0}>
-              <ShoppingCart className="h-5 w-5" />
-              {addingToCart ? "Adding..." : "Add to Cart"}
-            </Button>
-            <Button
-              variant="bordered"
-              size="lg"
-              onPress={handleAddToWishlist}
-              disabled={addingToWishlist}>
-              <Heart className="h-5 w-5" />
-            </Button>
-          </div>
-
-          {/* Features */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-blue-500" />
-              <span className="text-sm">{wheel.warranty}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Truck className="h-5 w-5 text-green-500" />
-              <span className="text-sm">Free Shipping</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Star className="h-5 w-5 text-yellow-500" />
-              <span className="text-sm">{wheel.conditionInfo}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Info className="h-5 w-5 text-gray-500" />
-              <span className="text-sm">{wheel.productLine.join(", ")}</span>
+              <div className="flex flex-col md:flex-row gap-4 pt-4">
+                <div className="flex items-center gap-4 bg-gray-50 dark:bg-[#1a1d23] p-2 rounded-[24px] justify-between px-6 border">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white transition-all shadow-sm">
+                    <Minus size={18} />
+                  </button>
+                  <span className="text-xl font-black">{quantity}</span>
+                  <button
+                    onClick={() =>
+                      setQuantity(
+                        Math.min(wheel?.stockQuantity || 100, quantity + 1)
+                      )
+                    }
+                    className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white transition-all shadow-sm">
+                    <Plus size={18} />
+                  </button>
+                </div>
+                <Button
+                  isLoading={addingToCart}
+                  onPress={() =>
+                    addToCart({
+                      productType: "wheel",
+                      productId: wheel._id,
+                      quantity: finalQuantity,
+                    })
+                  }
+                  className="w-full md:flex-1 h-20 bg-gradient-to-r from-blue-900 via-blue-700 to-blue-600 text-white rounded-[24px] text-lg font-black uppercase tracking-widest shadow-xl active:scale-95 group">
+                  <span className="flex items-center gap-3">
+                    ENGAGE BUY NOW{" "}
+                    <ChevronRight
+                      size={22}
+                      className="group-hover:translate-x-1 transition-transform"
+                    />
+                  </span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Detailed Information Tabs */}
-      <div className="mt-12">
-        <Tabs
-          aria-label="Wheel Information"
-          className="w-full">
-          <Tab
-            key="specifications"
-            title="Specifications">
-            <Card>
-              <CardBody className="p-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div>
-                    <h3 className="font-semibold mb-4">Wheel Dimensions</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Rim Diameter:</span>
-                        <span>{wheel.diameter.diameter}"</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Rim Width:</span>
-                        <span>{wheel.width.width}"</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Wheel Size:</span>
-                        <span>{wheel.wheelSize}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Wheel Width:</span>
-                        <span>{wheel.wheelWidth}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Gross Weight:</span>
-                        <span>{wheel.grossWeight} lbs</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-4">
-                      Bolt Pattern & Fitment
-                    </h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Bolt Pattern:</span>
-                        <span>{wheel.boltPattern}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Number of Bolts:</span>
-                        <span>{wheel.numberOFBolts}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Hub Bore Size:</span>
-                        <span>{wheel.hubBoreSize}mm</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Offset:</span>
-                        <span>{wheel.offset}mm</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>ATV Offset:</span>
-                        <span>{wheel.ATVOffset}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-4">Design & Material</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Material Type:</span>
-                        <span>{wheel.materialType}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Wheel Color:</span>
-                        <span>{wheel.wheelColor}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Finish:</span>
-                        <span>{wheel.finish}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Wheel Accent:</span>
-                        <span>{wheel.wheelAccent}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Wheel Pieces:</span>
-                        <span>{wheel.wheelPieces}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-4">
-                      Performance & Ratings
-                    </h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Load Capacity:</span>
-                        <span>{wheel.loadCapacity} lbs</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Load Rating:</span>
-                        <span>{wheel.loadRating}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Wheel Type:</span>
-                        <span>{wheel.wheelType}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Construction Type:</span>
-                        <span>{wheel.constructionType}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>GTIN:</span>
-                        <span>{wheel.GTIN}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-          </Tab>
+        {/* Quick Stats Grid */}
+        <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-gray-50 dark:bg-[#1a1d23] p-6 rounded-[32px] border flex flex-col items-center">
+            <Gauge
+              className="text-blue-600 mb-2"
+              size={24}
+            />
+            <p className="text-[10px] font-black text-gray-400 uppercase mb-1">
+              Bolt Pattern
+            </p>
+            <p className="font-black italic">{wheel?.boltPattern}</p>
+          </div>
+          <div className="bg-gray-50 dark:bg-[#1a1d23] p-6 rounded-[32px] border flex flex-col items-center">
+            <Palette
+              className="text-blue-600 mb-2"
+              size={24}
+            />
+            <p className="text-[10px] font-black text-gray-400 uppercase mb-1">
+              Color
+            </p>
+            <p className="font-black italic">{wheel?.wheelColor}</p>
+          </div>
+          <div className="bg-gray-50 dark:bg-[#1a1d23] p-6 rounded-[32px] border flex flex-col items-center">
+            <Settings
+              className="text-blue-600 mb-2"
+              size={24}
+            />
+            <p className="text-[10px] font-black text-gray-400 uppercase mb-1">
+              Offset
+            </p>
+            <p className="font-black italic">{wheel?.offset}mm</p>
+          </div>
+          <div className="bg-gray-50 dark:bg-[#1a1d23] p-6 rounded-[32px] border flex flex-col items-center">
+            <ShieldCheck
+              className="text-blue-600 mb-2"
+              size={24}
+            />
+            <p className="text-[10px] font-black text-gray-400 uppercase mb-1">
+              Condition
+            </p>
+            <p className="font-black italic">{wheel?.conditionInfo}</p>
+          </div>
+        </div>
 
-          <Tab
-            key="warranty"
-            title="Warranty & Support">
-            <Card>
-              <CardBody className="p-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">Warranty Information</h3>
-                    <p>{wheel.warranty}</p>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-2">Brand Description</h3>
-                    <p>{wheel.brand.description}</p>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-2">Product Details</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Unit Name:</span>
-                        <span>{wheel.unitName}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Condition:</span>
-                        <span>{wheel.conditionInfo}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Product Line:</span>
-                        <span>{wheel.productLine.join(", ")}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-          </Tab>
-
-          <Tab
-            key="reviews"
-            title={`Reviews (${reviews?.length || 0})`}>
-            <Card>
-              <CardBody className="p-6">
-                {/* Reviews Summary */}
-                <div className="mb-6 pb-6 border-b">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="text-3xl font-bold">
-                      {averageRating.toFixed(1)}
-                    </div>
+        {/* Detailed Tabs with ALL Interface Fields */}
+        <div className="mt-16">
+          <Tabs
+            variant="underlined"
+            classNames={{
+              cursor: "bg-blue-600",
+              tab: "font-black uppercase tracking-widest text-[10px] md:text-sm",
+            }}>
+            <Tab
+              key="specs"
+              title="Performance Specs">
+              <Card className="mt-6 rounded-[32px] bg-gray-50 dark:bg-[#1a1d23] border-none">
+                <CardBody className="p-8 md:p-12">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-gray-900 dark:text-white">
+                    {/* Geometry & Fitment */}
                     <div>
-                      {renderStars(Math.round(averageRating))}
-                      <p className="text-sm text-gray-500 mt-1">
-                        Based on {reviews.length} review
-                        {reviews.length !== 1 ? "s" : ""}
-                      </p>
+                      <h3 className="text-blue-600 font-black uppercase text-xs mb-6 flex items-center gap-2">
+                        <Activity size={16} /> Fitment & Geometry
+                      </h3>
+                      <div className="space-y-4 text-sm font-black italic">
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Diameter / Size
+                          </span>{" "}
+                          {wheel?.diameter?.diameter}" / {wheel?.wheelSize}
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Rim Width
+                          </span>{" "}
+                          {wheel?.rimWidth}mm
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Hub Bore / Size
+                          </span>{" "}
+                          {wheel?.hubBore} / {wheel?.hubBoreSize}mm
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            ATV Offset
+                          </span>{" "}
+                          {wheel?.ATVOffset}
+                        </p>
+                      </div>
+                    </div>
+                    {/* Construction & Materials */}
+                    <div>
+                      <h3 className="text-blue-600 font-black uppercase text-xs mb-6 flex items-center gap-2">
+                        <Package size={16} /> Build & Materials
+                      </h3>
+                      <div className="space-y-4 text-sm font-black italic">
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Material Type
+                          </span>{" "}
+                          {wheel?.materialType}
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Wheel Pieces
+                          </span>{" "}
+                          {wheel?.wheelPieces}
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Construction
+                          </span>{" "}
+                          {wheel?.constructionType}
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Wheel Type
+                          </span>{" "}
+                          {wheel?.wheelType}
+                        </p>
+                      </div>
+                    </div>
+                    {/* Ratings & Technical */}
+                    <div>
+                      <h3 className="text-blue-600 font-black uppercase text-xs mb-6 flex items-center gap-2">
+                        <Trophy size={16} /> Performance Specs
+                      </h3>
+                      <div className="space-y-4 text-sm font-black italic">
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Load Cap / Rating
+                          </span>{" "}
+                          {wheel?.loadCapacity} / {wheel?.loadRating}
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Bolts Qty / Num
+                          </span>{" "}
+                          {wheel?.BoltsQuantity} / {wheel?.numberOFBolts}
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            Gross Weight
+                          </span>{" "}
+                          {wheel?.grossWeight}
+                        </p>
+                        <p className="flex justify-between border-b pb-2">
+                          <span className="text-gray-500 not-italic uppercase text-[10px]">
+                            GTIN
+                          </span>{" "}
+                          {wheel?.GTIN}
+                        </p>
+                      </div>
                     </div>
                   </div>
+                </CardBody>
+              </Card>
+            </Tab>
 
-                  {/* Rating Distribution */}
-                  {/* {reviewStats.ratingDistribution && (
-                    <div className="mt-4 space-y-2">
-                      {[5, 4, 3, 2, 1].map((rating) => (
-                        <div key={rating} className="flex items-center gap-2">
-                          <div className="w-12 text-sm text-right">{rating} stars</div>
-                          <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-yellow-400"
-                              style={{
-                                width: `${
-                                  reviewStats.reviewCount
-                                    ? (reviewStats.ratingDistribution[rating] / reviewStats.reviewCount) * 100
-                                    : 0
-                                }%`,
-                              }}
-                            ></div>
-                          </div>
-                          <div className="w-8 text-sm text-gray-500">{reviewStats.ratingDistribution[rating] || 0}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )} */}
+            <Tab
+              key="description"
+              title="Description">
+              <Card className="mt-6 rounded-[32px] bg-gray-50 dark:bg-[#1a1d23] border-none p-8 leading-relaxed italic font-medium">
+                "{wheel?.description}"
+              </Card>
+            </Tab>
 
-                  {user && !showReviewForm && (
-                    <Button
-                      color="primary"
-                      onPress={() => setShowReviewForm(true)}
-                      className="gap-2">
-                      <Plus className="h-4 w-4" />
-                      Write a Review
-                    </Button>
-                  )}
+            <Tab
+              key="reviews"
+              title={`Pit Stop Reviews (${reviews.length})`}>
+              <div className="mt-8 grid gap-8 lg:grid-cols-3">
+                <div className="lg:col-span-1">
+                  <div className="bg-gradient-to-br from-blue-700 to-blue-500 text-white p-8 rounded-[40px] text-center sticky top-24 shadow-2xl">
+                    <h2 className="text-7xl font-black italic mb-2">
+                      {averageRating.toFixed(1)}
+                    </h2>
+                    <p className="uppercase font-black text-[10px] mb-8 tracking-widest opacity-80">
+                      Track Performance
+                    </p>
+                    {user && !showReviewForm && (
+                      <Button
+                        onPress={() => setShowReviewForm(true)}
+                        className="w-full bg-white text-blue-600 font-black uppercase h-14 rounded-2xl">
+                        Write Review
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
-                {/* Review Form */}
-                {showReviewForm && (
-                  <Card className="mb-6">
-                    <CardBody className="p-4">
-                      <h3 className="font-semibold mb-4">
-                        {editingReview ? "Edit Review" : "Write a Review"}
-                      </h3>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium mb-2">
-                            Rating
-                          </label>
-                          {renderStars(reviewForm.rating, true, (rating: any) =>
-                            setReviewForm((prev) => ({ ...prev, rating }))
-                          )}
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-2">
-                            Comment
-                          </label>
-                          <textarea
-                            value={reviewForm.comment}
-                            onChange={(e) =>
-                              setReviewForm((prev) => ({
-                                ...prev,
-                                comment: e.target.value,
-                              }))
-                            }
-                            placeholder="Share your experience with this wheel..."
-                            className="w-full p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-                            rows={4}
-                            maxLength={500}
-                          />
-                          <p className="text-xs text-gray-500 mt-1">
-                            {reviewForm.comment.length}/500 characters
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            color="primary"
-                            onPress={handleSubmitReview}
-                            disabled={addingReview || updatingReview}>
-                            {addingReview || updatingReview
-                              ? "Submitting..."
-                              : editingReview
-                                ? "Update Review"
-                                : "Submit Review"}
-                          </Button>
-                          <Button
-                            variant="bordered"
-                            onPress={handleCancelReview}>
-                            Cancel
-                          </Button>
-                        </div>
+                <div className="lg:col-span-2 space-y-4">
+                  {showReviewForm && (
+                    <Card className="rounded-[32px] p-6 bg-blue-50 dark:bg-blue-950/10 border-2 border-dashed border-blue-200">
+                      <div className="flex justify-between mb-4">
+                        <h3 className="font-black uppercase italic">
+                          Submit Pit Review
+                        </h3>
+                        <button
+                          onClick={() => setShowReviewForm(false)}
+                          className="text-gray-400 hover:text-red-500">
+                          <X size={20} />
+                        </button>
                       </div>
-                    </CardBody>
-                  </Card>
-                )}
+                      <div className="flex gap-2 mb-4">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star
+                            key={s}
+                            onClick={() =>
+                              setReviewForm((p) => ({ ...p, rating: s }))
+                            }
+                            className={`cursor-pointer ${s <= reviewForm.rating ? "fill-orange-500 text-orange-500" : "text-gray-300"}`}
+                          />
+                        ))}
+                      </div>
+                      <textarea
+                        value={reviewForm.comment}
+                        onChange={(e) =>
+                          setReviewForm((p) => ({
+                            ...p,
+                            comment: e.target.value,
+                          }))
+                        }
+                        className="w-full p-4 rounded-2xl mb-4 border-none outline-none"
+                        placeholder="Experience the alloy performance..."
+                        rows={4}
+                      />
+                      <Button
+                        onPress={() =>
+                          addReview({
+                            product: wheel._id,
+                            productType: "wheel",
+                            rating: reviewForm.rating,
+                            comment: reviewForm.comment,
+                          })
+                        }
+                        className="bg-blue-600 text-white font-black uppercase px-8 rounded-xl">
+                        Submit
+                      </Button>
+                    </Card>
+                  )}
 
-                {/* Reviews List */}
-                <div className="space-y-4">
-                  {reviewsLoading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                      <p>Loading reviews...</p>
-                    </div>
-                  ) : reviews.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500">
-                        No reviews yet. Be the first to review this wheel!
+                  <div className="space-y-4">
+                    {reviews.length === 0 ? (
+                      <p className="text-center text-gray-400 py-10">
+                        No reviews from the track yet.
                       </p>
-                    </div>
-                  ) : (
-                    reviews.map((review: any) => (
-                      <Card
-                        key={review._id}
-                        className="border">
-                        <CardBody className="p-4">
-                          <div className="flex justify-between items-start mb-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                                <span className="text-sm font-medium">
-                                  {review.user?.firstName?.charAt(0) || "U"}
-                                </span>
+                    ) : (
+                      reviews.map((r: any) => (
+                        <div
+                          key={r._id}
+                          className="bg-gray-50 dark:bg-[#1a1d23] p-8 rounded-[40px] border">
+                          <div className="flex justify-between mb-4">
+                            <div className="flex gap-4">
+                              <div className="h-12 w-12 bg-blue-100 rounded-2xl flex items-center justify-center font-black text-blue-600">
+                                {r.user?.firstName?.[0]}
                               </div>
                               <div>
-                                <p className="font-medium">
-                                  {review.user?.firstName +
-                                    " " +
-                                    review?.user?.lastName || "Anonymous"}
+                                <p className="font-black uppercase italic text-sm">
+                                  {r.user?.firstName} {r.user?.lastName}
                                 </p>
-                                <div className="flex items-center gap-2">
-                                  {renderStars(review.rating)}
-                                  <span className="text-sm text-gray-500">
-                                    {new Date(
-                                      review.createdAt
-                                    ).toLocaleDateString()}
-                                  </span>
+                                <div className="flex gap-0.5 mt-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      size={10}
+                                      className={
+                                        i < r.rating
+                                          ? "fill-orange-500 text-orange-500"
+                                          : "text-gray-300"
+                                      }
+                                    />
+                                  ))}
                                 </div>
                               </div>
                             </div>
-
-                            {user && user._id === review.user?._id && (
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="light"
-                                  onPress={() => handleEditReview(review)}>
-                                  Edit
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="light"
-                                  color="danger"
-                                  onPress={() => handleDeleteReview(review._id)}
-                                  disabled={deletingReview}>
-                                  Delete
-                                </Button>
-                              </div>
+                            {user?._id === r.user?._id && (
+                              <button
+                                onClick={() => deleteReview(r._id)}
+                                className="text-red-500">
+                                <Trash2 size={18} />
+                              </button>
                             )}
                           </div>
-
-                          {review.comment && (
-                            <p className="text-gray-700">{review.comment}</p>
-                          )}
-                        </CardBody>
-                      </Card>
-                    ))
-                  )}
+                          <p className="text-gray-600 dark:text-gray-400 italic font-medium">
+                            "{r.comment}"
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
-              </CardBody>
-            </Card>
-          </Tab>
-        </Tabs>
+              </div>
+            </Tab>
+          </Tabs>
+        </div>
       </div>
     </div>
   );

@@ -13,6 +13,8 @@ import {
   Ruler,
   Building2,
   X,
+  Flame,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -31,7 +33,7 @@ const ProductsAndServices = () => {
   });
   const [selectedSize, setSelectedSize] = useState<any>(null);
   const [selectedBrand, setSelectedBrand] = useState<any>(null);
-  const [shoppingMethod, setShoppingMethod] = useState("vehicle"); // Track which method was used
+  const [shoppingMethod, setShoppingMethod] = useState("vehicle");
 
   return (
     <>
@@ -67,17 +69,7 @@ const ProductsAndServices = () => {
 
 export default ProductsAndServices;
 
-interface TabsProps {
-  setMainStep: (step: any) => void;
-  vehicle: any;
-  setVehicle: (vehicle: any) => void;
-  selectedSize: any;
-  setSelectedSize: (size: any) => void;
-  selectedBrand: any;
-  setSelectedBrand: (brand: any) => void;
-  setShoppingMethod: (method: string) => void;
-}
-
+/* --- 🏎️ TABS COMPONENT (Original Logic + Sporty UI) --- */
 const Tabs = ({
   setMainStep,
   vehicle,
@@ -87,100 +79,82 @@ const Tabs = ({
   selectedBrand,
   setSelectedBrand,
   setShoppingMethod,
-}: TabsProps) => {
+}: any) => {
   const [activeTab, setActiveTab] = useState("vehicle");
 
   const tabs = [
     {
       id: "vehicle",
-      label: "Shop by Vehicle",
+      label: "Vehicle",
       icon: Car,
-      description: "Find products by your car's make, model, and year",
+      description: "Match by Year, Make, Model",
     },
     {
       id: "size",
-      label: "Shop by Size",
+      label: "Size",
       icon: Ruler,
-      description: "Search by tire size or wheel dimensions",
+      description: "Search by Dimensions",
     },
     {
       id: "brand",
-      label: "Shop by Brand",
+      label: "Brand",
       icon: Building2,
-      description: "Browse products from your favorite brands",
+      description: "Shop Favorite Brands",
     },
   ];
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
     setShoppingMethod(tabId);
-
-    // Reset selections when switching tabs
     if (tabId !== "vehicle")
-      setVehicle({
-        year: "",
-        make: "",
-        model: "",
-        trim: "",
-        tireSize: "",
-      });
+      setVehicle({ year: "", make: "", model: "", trim: "", tireSize: "" });
     if (tabId !== "size") setSelectedSize(null);
     if (tabId !== "brand") setSelectedBrand(null);
   };
 
-  const handleClose = () => {
-    // Handle modal/component close
-    setMainStep(1);
-  };
-
   return (
-    <div className="w-full max-w-6xl mx-auto bg-white rounded-lg shadow-lg">
-      {/* Tab Headers */}
-      <div className="flex border-b border-gray-200 relative">
-        {tabs.map((tab, index) => {
-          const Icon = tab.icon;
+    <div className="w-full max-w-6xl mx-auto bg-white/95 dark:bg-[#0f1115]/98 backdrop-blur-2xl rounded-t-[40px] shadow-2xl border-t border-x border-orange-500/20 overflow-hidden transition-all duration-500">
+      {/* 🏁 Tab Headers: Fixed Grid for Mobile */}
+      <div className="grid grid-cols-3 border-b border-gray-100 dark:border-gray-800 relative">
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium transition-colors relative ${
-                activeTab === tab.id
-                  ? "text-red-600 border-b-2 border-red-600 bg-red-50"
-                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+              className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-4 sm:py-5 px-1 text-[10px] sm:text-xs font-black uppercase italic transition-all relative ${
+                isActive
+                  ? "text-orange-600 bg-orange-600/5"
+                  : "text-gray-400 hover:text-orange-400"
               }`}>
-              <Icon className="h-4 w-4" />
-              {tab.label}
-              {activeTab === tab.id && index === 1 && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">2</span>
-                </div>
-              )}
-              {activeTab === tab.id && index === 2 && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">3</span>
-                </div>
+              <tab.icon size={14} />
+              <span>{tab.label}</span>
+              {isActive && (
+                <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-orange-600 to-rose-600" />
               )}
             </button>
           );
         })}
-
-        {/* Close Button */}
         <button
-          onClick={handleClose}
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 transition-colors">
-          <X className="h-5 w-5" />
+          onClick={() => setMainStep(1)}
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-300 hover:text-red-500">
+          <X size={18} />
         </button>
       </div>
 
-      {/* Tab Description */}
-      <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
-        <p className="text-sm text-gray-600 text-center">
-          {tabs.find((tab) => tab.id === activeTab)?.description}
+      {/* ⚡ Status Line */}
+      <div className="bg-orange-600 flex items-center justify-center py-2 px-4 gap-2">
+        <Flame
+          size={12}
+          className="text-yellow-300 animate-pulse"
+        />
+        <p className="text-[8px] sm:text-[10px] font-black uppercase italic text-white tracking-[0.2em] text-center">
+          {tabs.find((t) => t.id === activeTab)?.description}
         </p>
       </div>
 
-      {/* Tab Content */}
-      <div className="min-h-[500px]">
+      {/* 🏎️ Content Area */}
+      <div className="p-4 sm:p-10 min-h-[450px] sm:min-h-[550px] dark:text-white">
         {activeTab === "vehicle" && (
           <VehicleSelector
             setMainStep={setMainStep}
@@ -188,7 +162,6 @@ const Tabs = ({
             setVehicle={setVehicle}
           />
         )}
-
         {activeTab === "size" && (
           <SizeSelector
             setMainStep={setMainStep}
@@ -196,7 +169,6 @@ const Tabs = ({
             setSelectedSize={setSelectedSize}
           />
         )}
-
         {activeTab === "brand" && (
           <BrandSelector
             setMainStep={setMainStep}
@@ -209,21 +181,14 @@ const Tabs = ({
   );
 };
 
-interface ShoppingForStepProps {
-  pType?: "tire" | "wheel";
-  vehicle: any;
-  selectedSize: any;
-  selectedBrand: any;
-  shoppingMethod: string;
-}
-
+/* --- 🏎️ SHOPPING FOR STEP (Original Logic + Sporty UI) --- */
 const ShoppingForStep = ({
   pType,
   vehicle,
   selectedSize,
   selectedBrand,
   shoppingMethod,
-}: ShoppingForStepProps) => {
+}: any) => {
   const [productType, setProductType] = useState(
     shoppingMethod === "vehicle" ? "" : pType
   );
@@ -232,209 +197,161 @@ const ShoppingForStep = ({
   const { data: dt, isLoading } = useGetDrivingTypes();
 
   const categories = [
-    {
-      name: "Tire",
-      image: "/t.webp",
-      link: "/tire",
-    },
-    {
-      name: "Wheel",
-      image: "/w.webp",
-      link: "/wheel",
-    },
+    { name: "Tire", image: "/t.webp" },
+    { name: "Wheel", image: "/w.webp" },
   ];
 
-  // Generate the appropriate URL based on shopping method and product type
   const getProductUrl = () => {
     const baseUrl = `/${productType?.toLowerCase()}`;
     const drivingParam = drivingType ? `drivingType=${drivingType}` : "";
-
-    // For vehicle method, we only need driving type as we have filtered from localStorage
-    if (shoppingMethod === "vehicle") {
+    if (shoppingMethod === "vehicle")
       return `${baseUrl}${drivingParam ? `?${drivingParam}` : ""}`;
-    }
 
-    // For size method, add size parameters
+    const params = new URLSearchParams();
+    if (drivingType) params.append("drivingType", drivingType);
     if (shoppingMethod === "size" && selectedSize) {
-      const sizeParams = new URLSearchParams();
-      if (drivingType) sizeParams.append("drivingType", drivingType);
-
-      // Add size parameters if available
-      if (selectedSize.width)
-        sizeParams.append("width", selectedSize.width._id);
-      if (selectedSize.ratio)
-        sizeParams.append("ratio", selectedSize.ratio._id);
+      if (selectedSize.width) params.append("width", selectedSize.width._id);
+      if (selectedSize.ratio) params.append("ratio", selectedSize.ratio._id);
       if (selectedSize.diameter)
-        sizeParams.append("diameter", selectedSize.diameter._id);
-
-      return `${baseUrl}?${sizeParams.toString()}`;
+        params.append("diameter", selectedSize.diameter._id);
     }
-
-    // For brand method, add brand parameters
-    if (shoppingMethod === "brand" && selectedBrand) {
-      const brandParams = new URLSearchParams();
-      if (drivingType) brandParams.append("drivingType", drivingType);
-
-      // Add brand ID if available
-      if (selectedBrand.brand)
-        brandParams.append("brand", selectedBrand.brand._id);
-
-      return `${baseUrl}?${brandParams.toString()}`;
+    if (shoppingMethod === "brand" && selectedBrand?.brand) {
+      params.append("brand", selectedBrand.brand._id);
     }
-
-    // Default fallback
-    return baseUrl;
+    return `${baseUrl}?${params.toString()}`;
   };
 
   return (
-    <div className="mx-auto mt-10 p-5 border rounded-lg shadow-lg max-w-4xl w-full">
-      <Card className="shadow-none">
-        <CardBody>
-          {shoppingMethod === "vehicle" && (
-            <div className="flex flex-col items-center text-center mb-4">
-              <div className="bg-green-100 p-3 rounded-full mb-4">
-                <CheckCircle className="h-10 w-10 text-green-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">
-                Vehicle Added Successfully!
-              </h3>
-              <p className="text-gray-500 mb-4">
-                Your vehicle has been saved and is ready for shopping.
-              </p>
-            </div>
-          )}
-
-          {shoppingMethod === "vehicle" && (
-            <div className="rounded-lg p-5 mb-4">
-              <div className="flex items-center justify-center mb-4">
-                <Car className="h-6 w-6 text-gray-700 mr-2" />
-                <h4 className="text-lg text-default-500 font-semibold">
-                  {vehicle.year} {vehicle.make} {vehicle.model}
-                </h4>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                <div className="border p-3 rounded-md shadow-sm">
-                  <p className="font-medium">Year</p>
-                  <p className="font-bold">{vehicle.year}</p>
-                </div>
-                <div className="border p-3 rounded-md shadow-sm">
-                  <p className="font-medium">Make</p>
-                  <p className="font-bold">{vehicle.make}</p>
-                </div>
-                <div className="border p-3 rounded-md shadow-sm">
-                  <p className="font-medium">Model</p>
-                  <p className="font-bold">{vehicle.model}</p>
-                </div>
-                <div className="border p-3 rounded-md shadow-sm">
-                  <p className="font-medium">Trim</p>
-                  <p className="font-bold">{vehicle.trim || "N/A"}</p>
-                </div>
-                <div className="border p-3 rounded-md shadow-sm col-span-1 sm:col-span-2">
-                  <p className="font-medium">Tire Size</p>
-                  <p className="font-bold">{vehicle.tireSize}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {shoppingMethod === "size" && (
-            <div className="flex flex-col items-center text-center mb-4">
-              <div className="bg-green-100 p-3 rounded-full mb-4">
-                <Ruler className="h-10 w-10 text-green-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">
-                Size Selected Successfully!
-              </h3>
-              <p className="text-gray-500 mb-4">
-                Your size preferences have been saved and are ready for
-                shopping.
-              </p>
-
-              {selectedSize && (
-                <div className="border p-4 rounded-lg w-full max-w-md">
-                  <h4 className="font-medium text-lg mb-2">
-                    Selected {pType?.toUpperCase()} Size
-                  </h4>
-                  <div className="grid grid-cols-3 gap-3 text-sm">
-                    <div className="border p-3 rounded-md shadow-sm">
-                      <p className="font-medium">Width</p>
-                      <p className="font-bold">
-                        {selectedSize.width.width || "N/A"}
-                      </p>
-                    </div>
-                    <div className="border p-3 rounded-md shadow-sm">
-                      <p className="font-medium">Ratio</p>
-                      <p className="font-bold">
-                        {selectedSize.ratio.ratio || "N/A"}
-                      </p>
-                    </div>
-                    <div className="border p-3 rounded-md shadow-sm">
-                      <p className="font-medium">Diameter</p>
-                      <p className="font-bold">
-                        {selectedSize.diameter.diameter || "N/A"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+    <div className="w-full bg-white dark:bg-[#0c0e12] rounded-t-[40px] shadow-2xl border-t border-orange-600/30 p-5 sm:p-12 overflow-hidden transition-all duration-500">
+      <Card className="shadow-none bg-transparent">
+        <CardBody className="p-0">
+          <div className="flex flex-col items-center text-center mb-8">
+            <div className="size-16 bg-gradient-to-br from-orange-500 to-rose-700 rounded-full flex items-center justify-center shadow-lg mb-4">
+              {shoppingMethod === "vehicle" ? (
+                <Car
+                  className="text-white"
+                  size={32}
+                />
+              ) : shoppingMethod === "size" ? (
+                <Ruler
+                  className="text-white"
+                  size={32}
+                />
+              ) : (
+                <Building2
+                  className="text-white"
+                  size={32}
+                />
               )}
             </div>
-          )}
+            <h3 className="text-2xl sm:text-4xl font-black uppercase italic tracking-tighter dark:text-white">
+              {shoppingMethod === "vehicle"
+                ? "VEHICLE SECURED!"
+                : shoppingMethod === "size"
+                  ? "SIZE IDENTIFIED!"
+                  : "BRAND SELECTED!"}
+            </h3>
+            <p className="text-gray-500 font-bold uppercase text-[10px] tracking-widest mt-1">
+              Ready to fuel your performance
+            </p>
+          </div>
 
-          {shoppingMethod === "brand" && (
-            <div className="flex flex-col items-center text-center mb-4">
-              <div className="bg-green-100 p-3 rounded-full mb-4">
-                <Building2 className="h-10 w-10 text-green-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">
-                Brand Selected Successfully!
-              </h3>
-              <p className="text-gray-500 mb-4">
-                Your brand preference has been saved and is ready for shopping.
-              </p>
-
-              {selectedBrand && (
-                <div className="border p-4 rounded-lg w-full max-w-md">
-                  <h4 className="font-medium text-lg mb-2">Selected Brand</h4>
-                  <div className="p-3 rounded-md shadow-sm border">
-                    <p className="font-medium">Brand</p>
-                    <p className="font-bold">
-                      {selectedBrand.brand.name || "N/A"}
-                    </p>
-                  </div>
-                </div>
-              )}
+          {/* Configuration Card */}
+          <div className="bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 rounded-[32px] p-6 mb-10">
+            <div className="flex items-center gap-3 mb-6">
+              <Zap
+                size={18}
+                className="text-orange-600"
+              />
+              <h4 className="font-black uppercase italic text-xs tracking-widest opacity-70">
+                Active Specs
+              </h4>
             </div>
-          )}
+
+            {shoppingMethod === "vehicle" ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 italic uppercase">
+                <div className="flex flex-col">
+                  <span className="text-[9px] text-gray-400">Make/Model</span>
+                  <span className="font-black text-sm">
+                    {vehicle.make} {vehicle.model}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] text-gray-400">Year</span>
+                  <span className="font-black text-sm">{vehicle.year}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] text-gray-400">Trim</span>
+                  <span className="font-black text-sm">
+                    {vehicle.trim || "BASE"}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px]  text-orange-600">Spec</span>
+                  <span className="font-black text-sm text-orange-600">
+                    {vehicle.tireSize}
+                  </span>
+                </div>
+              </div>
+            ) : shoppingMethod === "size" ? (
+              <div className="grid grid-cols-3 gap-4 italic uppercase">
+                <div className="flex flex-col">
+                  <span className="text-[9px] text-gray-400">Width</span>
+                  <span className="font-black text-sm">
+                    {selectedSize?.width?.width || "N/A"}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] text-gray-400">Ratio</span>
+                  <span className="font-black text-sm">
+                    {selectedSize?.ratio?.ratio || "N/A"}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px]  text-orange-600">Rim</span>
+                  <span className="font-black text-sm text-orange-600">
+                    {selectedSize?.diameter?.diameter}"
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col italic uppercase">
+                <span className="text-[9px] text-gray-400">
+                  Target Manufacturer
+                </span>
+                <span className="font-black text-2xl text-orange-600">
+                  {selectedBrand?.brand?.name}
+                </span>
+              </div>
+            )}
+          </div>
         </CardBody>
 
         {step === 1 && shoppingMethod === "vehicle" && (
-          <CardFooter className="flex flex-col items-center justify-center gap-6 rounded-2xl p-8 mb-6">
-            <h2 className="text-3xl font-bold text-center">
-              What are you shopping for?
+          <CardFooter className="flex flex-col p-0">
+            <h2 className="text-3xl font-black uppercase italic tracking-tighter text-center mb-8 dark:text-white">
+              What Gear do you need?
             </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 justify-center">
-              {categories.map((category, index) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-3xl mx-auto">
+              {categories.map((cat, idx) => (
                 <div
-                  key={index}
+                  key={idx}
                   onClick={() => {
-                    setProductType(category.name.toLowerCase());
+                    setProductType(cat.name.toLowerCase());
                     setStep(2);
                   }}
-                  className="transition-transform duration-300 hover:-translate-y-1 cursor-pointer border-1 rounded-3xl border-red-500">
-                  <div className="bg-white/20 backdrop-blur-lg border border-white/30 rounded-3xl p-6 flex flex-col items-center shadow-md hover:shadow-2xl transition-shadow">
+                  className="group relative cursor-pointer overflow-hidden rounded-[32px] border-2 border-transparent hover:border-orange-600 transition-all duration-500 bg-gray-50 dark:bg-white/5 p-8 flex flex-col items-center">
+                  <div className="relative w-36 h-36 group-hover:scale-110 transition-transform duration-500">
                     <Image
-                      src={category.image || "/placeholder.svg"}
-                      alt={category.name}
-                      width={160}
-                      height={160}
-                      className="object-contain w-full h-full z-10"
+                      src={cat.image}
+                      alt={cat.name}
+                      fill
+                      className="object-contain drop-shadow-2xl"
                     />
-                    <h3 className="text-xl font-semibold text-center">
-                      {category.name}
-                    </h3>
                   </div>
+                  <h3 className="text-2xl font-black uppercase italic mt-4 dark:text-white">
+                    {cat.name}S
+                  </h3>
                 </div>
               ))}
             </div>
@@ -442,57 +359,58 @@ const ShoppingForStep = ({
         )}
 
         {step === 2 && (
-          <CardFooter className="flex flex-col items-center justify-center gap-5 rounded-lg p-5 mb-4">
-            <div className="w-full max-w-2xl">
-              <h2 className="text-2xl font-bold text-center mb-6">
-                Select Your Driving Type
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                {dt &&
-                  dt?.data?.length &&
-                  !isLoading &&
-                  dt?.data?.map((type: any) => (
-                    <div
-                      key={type._id}
-                      onClick={() => setDrivingType(type._id)}
-                      className={`border p-4 rounded-lg cursor-pointer transition-all ${
-                        drivingType === type._id
-                          ? "border-red-500 shadow-md"
-                          : "border-gray-200 hover:border-red-300"
-                      }`}>
-                      <div className="flex items-center gap-3">
-                        {/* <div className="text-2xl">{type.icon}</div> */}
-                        <div>
-                          <h3 className="font-medium">{type.title}</h3>
-                          <p className="text-sm text-gray-600">
-                            {type.subTitle}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-
-              <div className="flex justify-end items-center">
-                {/* <Button onPress={() => setStep(1)} className="flex items-center gap-1">
-                  <ArrowLeft className="h-4 w-4" /> Back
-                </Button> */}
-
-                <Link href={getProductUrl()}>
-                  <Button
-                    disabled={!drivingType}
-                    className="bg-red-600 text-white hover:bg-red-700 flex items-center gap-1">
-                    Continue <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
+          <CardFooter className="flex flex-col p-0 w-full max-w-4xl mx-auto">
+            <h2 className="text-3xl font-black uppercase italic tracking-tighter text-center mb-8 dark:text-white">
+              Environment Selection
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mb-10">
+              {dt?.data?.map((type: any) => (
+                <div
+                  key={type._id}
+                  onClick={() => setDrivingType(type._id)}
+                  className={`group p-6 rounded-[24px] border-2 cursor-pointer transition-all duration-300 flex items-center justify-between ${
+                    drivingType === type._id
+                      ? "border-orange-600 bg-orange-600 text-white shadow-xl"
+                      : "border-gray-100 dark:border-gray-800 hover:border-orange-400 dark:text-white"
+                  }`}>
+                  <div className="flex flex-col">
+                    <h3 className="font-black uppercase italic text-sm">
+                      {type.title}
+                    </h3>
+                    <p
+                      className={`text-[10px] font-bold uppercase opacity-60 ${drivingType === type._id ? "text-white" : "text-gray-500"}`}>
+                      {type.subTitle}
+                    </p>
+                  </div>
+                  <CheckCircle
+                    size={16}
+                    className={
+                      drivingType === type._id
+                        ? "text-white"
+                        : "text-orange-600 opacity-20"
+                    }
+                  />
+                </div>
+              ))}
             </div>
+            <Link
+              href={getProductUrl()}
+              className="w-full">
+              <Button
+                disabled={!drivingType}
+                className="w-full h-16 bg-gradient-to-r from-orange-600 to-rose-700 text-white text-lg font-black uppercase italic tracking-widest rounded-[20px] shadow-2xl active:scale-95 transition-all">
+                Launch Catalog{" "}
+                <ArrowRight
+                  size={20}
+                  className="ml-2"
+                />
+              </Button>
+            </Link>
           </CardFooter>
         )}
 
         {step === 3 && (
-          <CardFooter className="flex flex-col items-center justify-center gap-5 bg-gray-50 rounded-lg p-5 mb-4">
+          <CardFooter className="flex flex-col items-center justify-center p-0">
             <TireWheelGuide type={productType as string} />
           </CardFooter>
         )}
@@ -502,43 +420,24 @@ const ShoppingForStep = ({
 };
 
 const TireWheelGuide = ({ type }: { type: string }) => {
-  const isTire = type === "tires";
+  const isTire = type === "tires" || type === "tire";
   const productType = isTire ? "tire" : "wheel";
 
   return (
-    <div className="border border-gray-200 rounded-2xl p-4 sm:p-6 lg:p-8 max-w-full sm:max-w-2xl mx-auto bg-white shadow-md hover:shadow-lg transition duration-300">
-      {/* Header */}
-      <div className="flex items-center justify-center gap-3 mb-5">
-        <div className="bg-red-600 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold text-base shadow-sm">
-          {isTire ? "T" : "W"}
-        </div>
-        <h2 className="text-lg sm:text-xl font-bold text-gray-800 leading-snug">
-          Tiresdash{" "}
-          <span className="text-gray-500 font-medium">{productType} guide</span>
-        </h2>
+    <div className="bg-white dark:bg-white/5 border border-gray-100 dark:border-gray-800 rounded-[32px] p-8 max-w-2xl w-full text-center shadow-2xl">
+      <div className="bg-orange-600 size-16 rounded-full flex items-center justify-center text-white font-black text-2xl mx-auto mb-6 shadow-lg shadow-orange-600/20 italic">
+        {isTire ? "T" : "W"}
       </div>
-
-      {/* Description */}
-      <p className="text-gray-600 text-sm sm:text-base mb-4 leading-relaxed">
-        TiresDash {isTire ? "Tire" : "Wheel"} uses data from safety checks,
-        weather records, and test track performance to help find the right{" "}
-        {productType} for your needs.
+      <h2 className="text-2xl sm:text-3xl font-black uppercase italic dark:text-white mb-4">
+        {productType} Performance Guide
+      </h2>
+      <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base mb-8 italic uppercase font-bold tracking-tight">
+        TiresDash {productType} analyzer uses track data and weather metrics to
+        optimize your drive.
       </p>
-
-      <p className="text-gray-800 text-sm sm:text-base mb-6 leading-relaxed">
-        <span className="font-medium">
-          Our personalized {productType} guide finds{" "}
-        </span>
-        <span className="font-bold text-black">the best match </span>
-        <span className="font-medium">
-          for your vehicle in just two easy steps.
-        </span>
-      </p>
-
-      {/* CTA Button */}
       <Link href={`/${productType}`}>
-        <button className="w-full bg-red-600 text-white py-3 text-sm sm:text-base font-bold rounded-lg hover:bg-red-700 transition duration-300">
-          FIND YOUR MATCH
+        <button className="w-full bg-orange-600 hover:bg-orange-700 text-white py-5 text-sm sm:text-base font-black uppercase italic tracking-widest rounded-2xl transition-all shadow-xl shadow-orange-600/20 active:scale-95">
+          ENGAGE {productType.toUpperCase()} CATALOG
         </button>
       </Link>
     </div>
