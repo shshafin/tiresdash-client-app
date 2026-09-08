@@ -1,53 +1,52 @@
-# Next.js & HeroUI Template
+# TiresDash client app
 
-This is a template for creating applications using Next.js 14 (app directory) and HeroUI (v2).
+Next.js/TypeScript customer-facing application for TiresDash — booking, product/catalog flows, and fleet-related client surfaces used in the WordPress-to-custom modernization path.
 
-[Try it on CodeSandbox](https://githubbox.com/heroui-inc/heroui/next-app-template)
+## What I worked on
 
-## Technologies Used
+Product engineering implementation on the customer-facing Next.js application as part of the TiresDash modernization. This repository is the client app, not a claim of sole business/product ownership or marketing outcomes.
 
-- [Next.js 14](https://nextjs.org/docs/getting-started)
-- [HeroUI v2](https://heroui.com/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Tailwind Variants](https://tailwind-variants.org)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Framer Motion](https://www.framer.com/motion/)
-- [next-themes](https://github.com/pacocoursey/next-themes)
+Public delivery boundary: [TiresDash case study](https://shafinsadnan.com/case-studies/tiresdash-wordpress-to-nextjs-migration)
 
-## How to Use
+## Core functionality
 
-### Use the template with create-next-app
+- Customer booking and related appointment flows
+- Catalog / product browsing paths (tires, wheels, related entities)
+- Auth and account-related client routes
+- Fleet-oriented client surfaces that talk to the backend API
+- Checkout/payment-related client integration points (backed by the API)
 
-To create a new project based on this template using `create-next-app`, run the following command:
+## Tech
 
-```bash
-npx create-next-app -e https://github.com/heroui-inc/next-app-template
-```
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- HeroUI component library
 
-### Install dependencies
+## Architecture / implementation notes
 
-You can use one of them `npm`, `yarn`, `pnpm`, `bun`, Example using `npm`:
+- App Router structure under `src/app`
+- Client talks to a separate Express/MongoDB API (`tiresdash-app-server`)
+- Local development defaults to port `3001`
+
+## Running locally
 
 ```bash
 npm install
-```
-
-### Run the development server
-
-```bash
 npm run dev
 ```
 
-### Setup pnpm (optional)
-
-If you are using `pnpm`, you need to add the following code to your `.npmrc` file:
+Build / start:
 
 ```bash
-public-hoist-pattern[]=*@heroui/*
+npm run build
+npm start
 ```
 
-After modifying the `.npmrc` file, you need to run `pnpm install` again to ensure that the dependencies are installed correctly.
+Create a local `.env.local` for API base URLs and any required public keys. Do not commit env files.
 
-## License
+## Related proof
 
-Licensed under the [MIT license](https://github.com/heroui-inc/next-app-template/blob/main/LICENSE).
+- Case study: https://shafinsadnan.com/case-studies/tiresdash-wordpress-to-nextjs-migration
+- API repository: https://github.com/shshafin/tiresdash-app-server
